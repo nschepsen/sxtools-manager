@@ -116,9 +116,8 @@ class Organizer:
                         date = f'20{date.replace(".", "-")}'
                     ext = m.group('ext').lower()
                     try: # data is in your own predefined library format
-                        performers = sorted([
-                            i.strip()
-                            for i in m.group('performers').replace('&', ',').split(',')])
+                        performers = [i.strip()
+                            for i in m.group('performers').replace('&', ',').split(',')]
                         title = m.group('title') # could be empty
                     except IndexError: # otherwise
                         source = m.group('source')[:-1].lower()
@@ -139,7 +138,7 @@ class Organizer:
                             source = source.replace(performer, '', 1)[1:]
                             performers.append(performer.title().replace('.', ' '))
                             if 'and.' not in source or lastloop:
-                                break
+                                break # break out of the while loop
                             elif source.startswith('and.'): source = source[4:]; lastloop = True
                         for substring in self.sitemap.get('droplist', []): source = source.replace(substring, '')
                         title = sub(r'\.+', ' ', source).title() # build a title
@@ -150,6 +149,7 @@ class Organizer:
                         logging.info(
                             f'ignore scene "{plain}" due to unknown sid')
                         continue
+                    performers = sorted(performers) # sort performer list alphabetically
                     for actor in performers:
                         self.performers[actor] = self.performers.get(actor, 0) + 1
                     self.sites[site] = self.sites.get(site, 0) + 1
