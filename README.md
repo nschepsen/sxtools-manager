@@ -31,6 +31,10 @@
 
 Legend: [**R**] Removed  [**F**] Fixed [**A**] Added [**I**] Information
 
+### Organizer!SXTools 1.0.1, updated @ 2021-04-28 ###
+
+* [**A**] Support for Scene Releases
+
 ### Organizer!SXTools 1.0.0, updated @ 2021-04-21 ###
 
 * [**I**] Initial Release

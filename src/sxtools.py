@@ -1,15 +1,15 @@
 #!/usr/bin/python3
 
+import logging  # used for debugging (see SXTools.log)
+
+from hashlib import md5
 from os import listdir, makedirs, path
-from re import IGNORECASE, match, search
+from re import IGNORECASE, match, search, sub
 from shutil import move
 from sys import argv, exit
 from time import process_time as measure
-from hashlib import md5
 
-from rapidjson import load, dump, dumps
-
-import logging  # used for debugging (SXTools.log)
+from rapidjson import dump, dumps, load
 
 h1 = lambda title: '--- [' + title.title() + '] ' + (30 - len(title)) * '-'
 
@@ -23,7 +23,9 @@ __VIDEO_EXT__ = (
     '.mp4',
     '.wmv')
 __MAGIC_NUM__ = 5
-__RE_VSNAME__ = r'^\((?P<date>[\d\-]+)\)\s(?P<performers>[\w\.\s]+((,\s[\w\s]+)*(\s&\s[\s\w]+))?),\s(?P<site>[!&\-\w\'’\s().]+)(,\s(?P<title>.*))*\.(?P<ext>' + '|'.join([x[1:] for x in __VIDEO_EXT__]) + ')'
+
+__RE_SCN_ID__ = r'(?P<site>\w+)\.(?P<date>\d\d(\.\d\d){2})\.(?P<source>[\w\.]+)(?P<ext>\w{3})'
+__RE_LIB_ID__ = r'^\((?P<date>[\d\-]+)\)\s(?P<performers>[\w\.\s]+((,\s[\w\s]+)*(\s&\s[\s\w]+))?),\s(?P<site>[!&\-\w\'’\s().]+)(,\s(?P<title>.*))*\.(?P<ext>' + '|'.join([x[1:] for x in __VIDEO_EXT__]) + ')'
 
 class Organizer:
 
@@ -100,17 +102,47 @@ class Organizer:
 
         for scene in [path.join(src, f) for f in listdir(src)]:
             plain = path.basename(scene)
-            # scene is a directory
+            # filename is a directory
             if path.isdir(scene):
                 self.analyse(scene)
-            # scene is a file
+            # filename is a file
             elif scene.lower().endswith(__VIDEO_EXT__):
-                m = search(__RE_VSNAME__, plain, IGNORECASE)
+                m = next(filter(
+                    lambda c: c, map(lambda x: search(x, plain), [__RE_SCN_ID__, __RE_LIB_ID__])), None)
                 if m is not None:
                     date = m.group('date')
+                    # check if date is in the scene format and correct it
+                    if chr(46) in date:
+                        date = f'20{date.replace(".", "-")}'
                     ext = m.group('ext').lower()
-                    performers = sorted([
-                        i.strip() for i in m.group('performers').replace('&', ',').split(',')])
+                    try: # data is in your own predefined library format
+                        performers = sorted([
+                            i.strip()
+                            for i in m.group('performers').replace('&', ',').split(',')])
+                        title = m.group('title') # could be empty
+                    except IndexError: # otherwise
+                        source = m.group('source')[:-1].lower()
+                        performers = list()
+                        cache = set(
+                            [*self.performers, *self.sitemap.get('actresses', [])])
+                        q = lambda i: input(f'Is {i} correct? ({source}) ').lower().strip() or i
+                        lastloop = False
+                        while True:
+                            performer = ''
+                            # look for performers that already exist in your library
+                            for name in map(lambda x: x.replace(' ', '.').lower(), cache):
+                                if source.startswith(name):
+                                    performer = name if name.count('.') else q(name)
+                                    break # found one, exit
+                            if not len(performer):
+                                performer = q(match(r'\w+\.?\w*', source).group(0))
+                            source = source.replace(performer, '', 1)[1:]
+                            performers.append(performer.title().replace('.', ' '))
+                            if 'and.' not in source or lastloop:
+                                break
+                            elif source.startswith('and.'): source = source[4:]; lastloop = True
+                        for substring in self.sitemap.get('droplist', []): source = source.replace(substring, '')
+                        title = sub(r'\.+', ' ', source).title() # build a title
                     sid = ''.join([x for x in m.group('site') if x.isalnum()]).lower()
                     site = self.library.get(sid, 'undefined')
                     if site == 'undefined':
@@ -118,7 +150,6 @@ class Organizer:
                         logging.info(
                             f'ignore scene "{plain}" due to unknown sid')
                         continue
-                    title = m.group('title') # title could be empty
                     for actor in performers:
                         self.performers[actor] = self.performers.get(actor, 0) + 1
                     self.sites[site] = self.sites.get(site, 0) + 1
@@ -146,7 +177,7 @@ class Organizer:
         for network, sites in [*self.sitemap['networks'].items(), (None, self.sitemap['sites'])]:
             for site in sites:
                 nid, sid = escape(network), escape(site)
-            # choose your prefered publisher format:
+            # choose your preferred publisher format:
                 # Network (Site) vs. Site
                 value = f'{network} ({site})' if network else site
                 self.library[sid] = value
