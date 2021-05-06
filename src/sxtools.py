@@ -24,7 +24,7 @@ __VIDEO_EXT__ = (
     '.wmv')
 __MAGIC_NUM__ = 5
 
-__RE_SCN_ID__ = r'(?P<site>\w+)\.(?P<date>\d\d(\.\d\d){2})\.(?P<source>[\w\.]+)(?P<ext>\w{3})'
+__RE_SCN_ID__ = r'(?P<site>\w+)\.(?P<date>\d\d(\.\d\d){2})\.(?P<source>[\w\.\-]+)(?P<ext>\w{3})'
 __RE_LIB_ID__ = r'^\((?P<date>[\d\-]+)\)\s(?P<performers>[\w\.\s]+((,\s[\w\s]+)*(\s&\s[\s\w]+))?),\s(?P<site>[!&\-\w\'’\s().]+)(,\s(?P<title>.*))*\.(?P<ext>' + '|'.join([x[1:] for x in __VIDEO_EXT__]) + ')'
 
 class Organizer:
@@ -135,6 +135,8 @@ class Organizer:
                                     break # found one, exit
                             if not len(performer):
                                 performer = q(match(r'\w+\.?\w*', source).group(0))
+                                if performer == 'no':
+                                    break
                             source = source.replace(performer, '', 1)[1:]
                             performers.append(performer.title().replace('.', ' '))
                             if 'and.' not in source or lastloop:
@@ -156,9 +158,13 @@ class Organizer:
                     actors = ', '.join(performers[:-2] + [' & '.join(performers[-2:])])
                     # correct the scene identifier
                     new = f'({date}) {actors}, {site}{", " + title if title else ""}.{ext}'
-                    if new != plain and not self.dry:
+                    if new != plain:
                         logging.info(f'rename {plain} to {new}')
-                        move(scene, path.join(src, new))
+                        if not path.exists(path.join(src, new)):
+                            move(scene, path.join(src, new))
+                        else:
+                            logging.warning(f'The scene "{new}" exists already!')
+                            continue
                     self.db.append({ 'path': src, 'id': new, 'performers': performers })
                 else:
                     self.warnings += 1
@@ -213,6 +219,10 @@ class Organizer:
                 target = path.join(self.out, target)
                 if scene['path'] != target:
                     makedirs(target, exist_ok=True)
+                    # check if file exists
+                    if path.exists(path.join(target, scene['id'])):
+                        print(f'[WARN] The scene "{scene.get("id")}" exists already')
+                        continue
                     move(path.join(scene['path'], scene['id']), path.join(target, scene['id']))
 
         ''' STEP 4: U P D A T E  T H E  S I T E M A P '''
