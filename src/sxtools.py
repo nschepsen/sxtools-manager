@@ -2,6 +2,7 @@
 
 import logging  # used for debugging (see SXTools.log)
 
+from operator import floordiv, truediv
 from hashlib import md5
 from os import listdir, makedirs, path
 from re import IGNORECASE, match, search, sub
@@ -12,6 +13,7 @@ from time import process_time as measure
 from rapidjson import dump, dumps, load
 
 h1 = lambda title: '--- [' + title.title() + '] ' + (30 - len(title)) * '-'
+p1 = lambda k, v, width: f'・{k} {(width - len(k) - len(str(v))) * "."} {v}'
 
 __VIDEO_EXT__ = (
     '.avi',
@@ -27,14 +29,24 @@ __MAGIC_NUM__ = 5
 __RE_SCN_ID__ = r'(?P<site>\w+)\.(?P<date>\d\d(\.\d\d){2})\.(?P<source>[\w\.\-]+)(?P<ext>\w{3})'
 __RE_LIB_ID__ = r'^\((?P<date>[\d\-]+)\)\s(?P<performers>[\w\.\s]+((,\s[\w\s]+)*(\s&\s[\s\w]+))?),\s(?P<site>[!&\-\w\'’\s().]+)(,\s(?P<title>.*))*\.(?P<ext>' + '|'.join([x[1:] for x in __VIDEO_EXT__]) + ')'
 
+def humanize(value: int) -> str:
+
+    for unit in ('bytes', 'KiB', 'MiB', 'GiB', 'TiB'):
+
+        if value < 1024:
+            return f'{value:0.2f} {unit}'
+        value = truediv(value, 1024)
+
+    return f'{value:0.1f} PiB' # pebibyte 1024^5 = 1,125,899,906,842,624 bytes
+
 class Organizer:
 
-    performers, sites, library = {}, {}, {}; warnings = 0; db = []
+    performers, sites, library = {}, {}, {}; size, warnings = 0, 0; db = []
 
     def __init__(self, args: list = []):
 
         self.__PROJECT__ = 'Organizer!SXTools'
-        self.__VERSION__ = '1.0.20210421'
+        self.__VERSION__ = '1.0.20210513'
         # create & configure the logger
         logging.basicConfig(
             filename='SXTools.log',
@@ -116,15 +128,14 @@ class Organizer:
                         date = f'20{date.replace(".", "-")}'
                     ext = m.group('ext').lower()
                     try: # data is in your own predefined library format
-                        performers = [i.strip()
+                        performers = [i.strip().title()
                             for i in m.group('performers').replace('&', ',').split(',')]
                         title = m.group('title') # could be empty
                     except IndexError: # otherwise
                         source = m.group('source')[:-1].lower()
                         performers = list()
-                        cache = set(
-                            [*self.performers, *self.sitemap.get('actresses', [])])
-                        q = lambda i: input(f'Is {i} correct? ({source}) ').lower().strip() or i
+                        cache = set([*self.performers, *self.sitemap.get('actresses', [])])
+                        q = lambda i: input(f'Is {i} correct? {source} ').lower().strip() or i
                         lastloop = False
                         while True:
                             performer = ''
@@ -165,6 +176,7 @@ class Organizer:
                         else:
                             logging.warning(f'The scene "{new}" exists already!')
                             continue
+                    self.size += path.getsize(path.join(src, new))
                     self.db.append({ 'path': src, 'id': new, 'performers': performers })
                 else:
                     self.warnings += 1
@@ -186,6 +198,8 @@ class Organizer:
             # choose your preferred publisher format:
                 # Network (Site) vs. Site
                 value = f'{network} ({site})' if network else site
+                if not network and self.library.get(sid, None):
+                    print(f'[WARN] {site} is listed already')
                 self.library[sid] = value
                 if network: self.library[f'{nid}{sid}'] = value
         # match acronyms to the existing keys
@@ -194,7 +208,7 @@ class Organizer:
             if self.library[acronym] == 'undefined':
                 logging.warning(f'The acronym "{acronym}" is undefined')
         # calculate the sitemap build up execution time
-        print(f'The sitemap library was built in {1e3 * (measure() - t0):.5f} milliseconds')
+        logging.info(f'The sitemap library was built in {1e3 * (measure() - t0):.5f} milliseconds')
 
         ''' STEP 2: T R A V E R S E  F O L D E R S '''
 
@@ -209,7 +223,7 @@ class Organizer:
         ''' STEP 3: R E N A M E  S C E N E S  A C C O R D I N G  TO  S C H E M A '''
 
         for scene in self.db:
-            if self.out in scene.get('path') and 'Miscellany' not in scene.get('path'):
+            if scene.get('path').startswith(self.out) and 'Miscellany' not in scene.get('path'):
                 continue
             famous = max([(self.performers[i], i) for i in scene.get('performers')])
             if not self.dry:
@@ -230,7 +244,7 @@ class Organizer:
         if self.hash != md5(dumps(self.sitemap, ensure_ascii=False).encode('utf8')).hexdigest():
             with open(path.join(self.app, 'sxtools.map.json'), 'w') as f:
                 dump(self.sitemap, f)
-        print(f'[INFO] {len(self.performers)} actors perform in {len(self.db)} movies produced by {len(self.sites)} studios')
+        print(f'[INFO] {len(self.performers)} actors perform in {len(self.db)} scenes ({humanize(self.size)}) produced by {len(self.sites)} sites')
 
         ''' STEP 5: V I S U A L I Z E  P A R S E D  D A T A '''
 
@@ -260,6 +274,7 @@ class Organizer:
         # for i in sorted([x for x in self.performers.keys() if len(x.split()) != 2], reverse=True, key=lambda item: len(item.split())):
         #     print(f'・{i} {(gap - len(i) - 1) * "."} {len(i.split())}')
         print('-------------------------------------')
+        print(f'{self.warnings} warning(s) occured while building library. So, please take the time to read the log file.')
 
 def main(): # ''' END ''' #
 

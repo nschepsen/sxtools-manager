@@ -5,7 +5,7 @@
 
 ## DESCRIPTION ##
 
-**O**rganizer!**SX**Tools helps you organize your video library according to scene's frequency
+**O**rganizer!**SX**Tools manages your scene collection according to video names and performers' appearance frequencies
 
 ### WHAT'S IMPLEMENTED?! ###
 
@@ -29,12 +29,11 @@
 
 ## CHANGELOG ##
 
-Legend: [**R**] Removed  [**F**] Fixed [**A**] Added [**I**] Information
-
 ### Organizer!SXTools 1.0.1, updated @ 2021-04-28 ###
 
-* [**A**] Support for Scene Releases
+* Add Support for Scene Releases
+* Fix Typo
 
 ### Organizer!SXTools 1.0.0, updated @ 2021-04-21 ###
 
-* [**I**] Initial Release
+* Initial Release
