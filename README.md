@@ -5,7 +5,7 @@
 
 ## DESCRIPTION ##
 
-**O**rganizer!**SX**Tools manages your scene collection according to video names and performers' appearance frequencies
+**O**rganizer!**SX**Tools manages your scene collection according to names and performers' appearance frequencies
 
 ### WHAT'S IMPLEMENTED?! ###
 
