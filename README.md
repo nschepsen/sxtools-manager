@@ -1,39 +1,37 @@
 ## PROJECT ##
 
-* ID: **O**rganizer!**SX**TOOLS
+* ID: **S**xTools!**M**ANAGER
 * Contact: git@schepsen.eu
 
 ## DESCRIPTION ##
 
-**O**rganizer!**SX**Tools manages your scene collection according to names and performers' appearance frequencies
+**S**xTools!**M**ANAGER helps you to manage a video collection according to your wishes
 
 ### WHAT'S IMPLEMENTED?! ###
 
-* Sort performers and sites in ascending order
-* Visualize data (as a table)
-* Look for duplicates and suspiciously named files
-* Rename sites according to their mapping names
-* Organize your library in a tree-like structure (see screenshot below)
+TBA
 
-## SCREENSHOTS ##
+### SCREENSHOTS ###
 
-![Organizer!SXTOOLS](docs/sxtools-v1.0.20210421.png?raw=true "Organizer!SXTools, Library Example")
-
-## USAGE ##
-
-* Adjust site mapping names in sxtools.map.json (not really required)
-* Adjust your preferred naming format
-    * ({date}) {performers}, {site}, {title}.{extension}
-    * ({date}) {performers}, {network} ({site}), {title}.{extension}
-* Check the log file to find out manual renaming cases (adjust sitemap)
+TBA
 
 ## CHANGELOG ##
 
-### Organizer!SXTools 1.0.1, updated @ 2021-04-28 ###
+### SxTools!MANAGER 1.2.0-beta.1, updated @ 2022-05-22 ###
 
-* Add Support for Scene Releases
+* Split the app in Core, CLI & GUI (using Qt6) modules
+* Rewrite the CLI client
+* Improve the CLI performance
+* Add 'ffprobe' support to read out scene's metadata
+* Convert the app to a pip package, e.g. 'pip install sxtools'
+* Add a logger ('~/sxtools/sXtools.log') for a better debugging
+
+### SxTools!MANAGER 1.0.1, updated @ 2021-04-28 ###
+
+* Add Support for different Scene Releases
 * Fix Typo
+* Update Performer & Publisher DB to the latest version
 
-### Organizer!SXTools 1.0.0, updated @ 2021-04-21 ###
+### SxTools!MANAGER 1.0.0, updated @ 2021-04-21 ###
 
 * Initial Release

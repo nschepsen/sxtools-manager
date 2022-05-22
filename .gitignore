@@ -1,0 +1,10 @@
+# SXTools #
+sxtools.map.json
+# VS Code #
+.vscode
+# Virtual Environment #
+.env
+# Byte-Compiled #
+__pycache__/
+# Distribution & Packaging #
+*.egg-info/
