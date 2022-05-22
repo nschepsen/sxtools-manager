@@ -234,10 +234,10 @@ class Manager:
             x > 0 for k, x in self.performers.items())
         # examine sitenmap for changes
         if self.hash != md5(dumps(self.sitemap, ensure_ascii=False).encode('utf8')).hexdigest():
-            with open(join(self.app, 'sxtools.map.json'), 'w') as f:
-                if not self.dry:
+            if not self.dry:
+                with open(join(self.app, 'sxtools.map.json'), 'w') as f:
                     dump(self.sitemap, f)
-            logger.info(f'Occured DB changes {"won\'t" if self.dry else "will"} be saved!')
+            logger.info('Saving sitemap in DRY_MODE takes no changes')
         logger.info(f'{performers} actors perform in {len(self.queue)} scenes produced by n sites')
 
 # SxTools!MANAGER helps you to manage collections according to your wishes
