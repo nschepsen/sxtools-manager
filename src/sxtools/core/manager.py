@@ -119,7 +119,7 @@ class Manager:
             else:
                 logger.debug(f'The file "{basename(path)}" isn\'t a video')
 
-    def analyse(self, s: Scene, rfc) -> bool:
+    def analyse(self, s: Scene, ui) -> bool:
         '''
         analyse the scene and parse date, performers, publisher and title from it
         '''
@@ -146,12 +146,12 @@ class Manager:
                     # look-ahead window range, up to 3 tokens
                     lookahead = range(min(tail.count('.') + 1, 3), 0, -1)
                     # look for already known performers
-                    for key in [
-                        '.'.join(tail.split('.')[:x]) for x in lookahead]:
-                        if key in self.performers:
-                            performer = key; break
+                    for key in ['.'.join(tail.split('.')[:x]) for x in lookahead]:
+                        if key in self.performers and key.count('.') <= 0:
+                             if ui.bool(f'Does {key} perform in {s}?'):
+                                performer = key; break
                     if not performer: # there is no record in the dictionary
-                        ret, performer = rfc(tail)
+                        ret, performer = ui.rfc(tail, s)
                         if ret == RFCode.PERFORMER:
                             pass
                         elif ret == RFCode.TITLE:
@@ -237,7 +237,7 @@ class Manager:
             with open(join(self.app, 'sxtools.map.json'), 'w') as f:
                 if not self.dry:
                     dump(self.sitemap, f)
-            logger.info(f'Occured DB changes {"wont" if self.dry else "will"} be saved!')
+            logger.info(f'Occured DB changes {"won\'t" if self.dry else "will"} be saved!')
         logger.info(f'{performers} actors perform in {len(self.queue)} scenes produced by n sites')
 
 # SxTools!MANAGER helps you to manage collections according to your wishes

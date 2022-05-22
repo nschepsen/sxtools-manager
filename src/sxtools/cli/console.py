@@ -3,6 +3,7 @@ from posixpath import basename
 from typing import Tuple
 
 from sxtools.core.manager import Manager, RFCode
+from sxtools.core.videoscene import Scene
 from sxtools.logging import REGEX, get_basic_logger
 
 logger = get_basic_logger() # sXtools.log
@@ -35,7 +36,7 @@ class Console:
         logger.info(f'{n} scene(s) were discovered in storages')
         i = 0
         for s in self.manager.queue:
-            ret = self.manager.analyse(s, self.rfc)
+            ret = self.manager.analyse(s, self)
             i += ret
             # if ret:
             #     logger.debug(
@@ -47,18 +48,23 @@ class Console:
             #         f'Title: "{s.title}"\n'
             #         f'------------------------\n'
             #         )
-                
+
         logger.debug(f'Erfolgreich erkannt: {i} of {n}'); self.manager.save()
 
         for s in self.manager.queue:
             self.manager.relocate(s)
 
-    def rfc(self, tail: str) -> Tuple[RFCode, str]:
+    def bool(self, msg: str) -> bool:
+        '''
+        '''
+        return input(f'> {msg} Type "yes" or "no":').lower().strip() or 'yes' == 'yes'
+
+    def rfc(self, tail: str, s: Scene) -> Tuple[RFCode, str]:
         '''
         ask the user, he/she has to know the performer
         '''
         suggestion = '.'.join(tail.split('.')[:2])
-        ret = input(f'> Does "{suggestion.replace(".", " ").title()}" perform in "{tail}"? Type "skip" to abort ').lower().strip() or suggestion
+        ret = input(f'> Does "{suggestion.replace(".", " ").title()}" perform in "{s}"? Type "skip" to abort ').lower().strip() or suggestion
 
         opcode = {
             'skip': RFCode.SKIP_SCENE,
