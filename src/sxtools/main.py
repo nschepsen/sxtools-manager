@@ -58,7 +58,7 @@ def main():
     parser.add_argument(
         '--no-metadata',
         action='store_true',
-        # dest='mo_metadata',
+        dest='wo_analyse',
         help='don\'t use ffprobe to get metadata',
         default=False)
     parser.add_argument(
@@ -75,7 +75,6 @@ def main():
     if args.verbose or args.quiet:
         # set logger level
         logger.setLevel(10 * (3 + min(args.quiet, 3) - min(args.verbose, 2)))
-    logger.info(f'{__project__} v{__version__} ({check_updates()})')
     manager = Manager(args)
     if args.gui:
         try:

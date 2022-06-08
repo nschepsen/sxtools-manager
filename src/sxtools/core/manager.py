@@ -1,24 +1,23 @@
 from argparse import Namespace
-from datetime import datetime
-from hashlib import md5  # used for sitemap.json hashing
+from hashlib import md5, shake_128  # used for sitemap.json hashing to detect changes
 from os import listdir, makedirs, sep
-from os.path import basename, dirname, exists, isdir, join, realpath
-from re import search, split, sub
-from rapidjson import dump, dumps, load
+from os.path import basename, dirname, exists, getsize, isdir, join, realpath
+from re import search, split  #, sub
 from shutil import move
-
+try:
+    from rapidjson import dump, dumps, load
+except ImportError:
+    from json import dump, dumps, load
 from sxtools import __date__, __project__, __version__
-from sxtools.core.rfcode import RFCode
+from sxtools.core.rfcode import RFCode  # FIXME: any WAs maybe?!
 from sxtools.core.videoscene import Scene
 from sxtools.logging import REGEX, get_basic_logger
-
-logger = get_basic_logger() # sXtools.log
+logger = get_basic_logger()  # sXtools.log
+from sxtools.utils import bview, fview, human_readable, sortmap, strtdate  # back-&frontend repr
 
 '''
 SxTools!MANAGER helps you to manage collections according to your wishes
 '''
-
-intview = lambda x: x.strip().lower().replace(' ', '.')
 
 # accepted video formats
 
@@ -38,19 +37,21 @@ __MAGIC_NUM__ = 5
 __RE_SCN_ID__ = r'(?P<site>\w+)\.(?P<date>\d\d(\.\d\d){2})\.(?P<tail>[\w\.\-]+)'
 __RE_LIB_ID__ = r'^\((?P<date>[\d\-]+)\)\s(?P<performers>[\w\.\s]+((,\s[\w\s]+)*(\s&\s[\s\w]+))?),\s(?P<site>[!&\-\w\'’\s().]+)(,\s(?P<title>.*))*'
 
+
 class Manager:
 
     def __init__(self, args: Namespace) -> None:
 
         self.src = args.input
-        self.out = args.output # used by GUI version
-        self.top = args.top
-        self.scan = not args.no_metadata
+        self.out = args.output
+        self.top = args.top # used by CLI only
+        self.is_analyse_req = not args.wo_analyse
         self.dry = args.dryrun
-        self.sorted = args.asc
+        self.caption = f'{__project__} v{__version__}'
         self.publishers = {}
-        self.queue = list() # imported scenes
+        self.scenes, self.queue = list(), list()
         self.app = dirname(dirname(realpath(__file__)))
+        logger.info(f'{self.caption}')
         if args.dryrun:
             logger.info(f'Mode "DRY_RUN" activated')
         with open(join(self.app, 'sxtools.map.json'), 'r') as f:
@@ -85,12 +86,12 @@ class Manager:
                 nid, sid = unify(network), unify(site)
             # choose your preferred publisher format:
                 # network (site) vs. site
-                publisher = f'{network} ({site})' if network else site
-                if not network and self.publishers.get(sid, None):
+                p = f'{network} ({site})' if network and nid != sid else site
+                if not network and self.publishers.get(sid):
                     logger.warning(f'"{site}" is already listed')
-                self.publishers[sid] = publisher
+                self.publishers[sid] = p
                 if network:
-                    self.publishers[f'{nid}{sid}'] = publisher
+                    self.publishers[f'{nid}{sid}'] = p
         # match acronyms to the existing keys
         for acronym, v in self.sitemap.get('acronyms', {}).items():
             if acronym == v: # pqoc
@@ -103,90 +104,99 @@ class Manager:
         logger.info(f'Loaded: {len(set(self.publishers.values()))} known site(s)')
         logger.warning(f'{len(self.sitemap["undefined"])} undefined key(s) detected')
 
-    def fetch(self, target):
+    def save(self) -> None:
         '''
-        recursively look for files in "self.src" and "self.out" directory
+        dump sitemap to a file sorting by keys, values in ascending order
         '''
-        for path in [join(target, f) for f in listdir(target)]:
+        sortmap(self.sitemap)
+        # count performers participated in fetched scenes
+        performers = sum(
+            x > 0 for k, x in self.performers.items())
+        # examine sitenmap for changes
+        if self.hash != md5(dumps(self.sitemap, ensure_ascii=False, sort_keys=True).encode('utf8')).hexdigest():
+            if not self.dry:
+                with open(join(self.app, 'sxtools.map.json'), 'w') as f:
+                    dump(self.sitemap, f)
+            logger.info('Saving sitemap in DRY_MODE takes no changes')
+        logger.info(f'{performers} actors perform in {len(self.queue)} scenes')
+
+    def fetch(self, directory: str) -> None:
+        '''
+        perform a recursive search to get v-files from source directories
+        '''
+        for path in [join(directory, f) for f in listdir(directory)]:
             if isdir(path):
                 self.fetch(path)
             elif path.lower().endswith(__VIDEO_EXT__):
-                # known = [x.path for x in self.queue] # FIXME: performance
+                # FIXME: problems?! implement a WA to avoid duplicates
                 if path not in [x.path for x in self.queue]:
-                    self.queue.append(Scene(path, self.scan))
-                else:
-                    logger.debug(f'"{basename(path)}" is already added')
+                    s = Scene(path)
+                    if self.is_analyse_req:
+                        s.scan()
+                    self.queue.append(s)
             else:
                 logger.debug(f'The file "{basename(path)}" isn\'t a video')
 
-    def analyse(self, s: Scene, ui) -> bool:
+    def analyse(self, s: Scene) -> bool:
         '''
-        analyse the scene and parse date, performers, publisher and title from it
+        tokenize the scene name and parse date, performers, publisher and title, if possible
         '''
-        regexrules = [__RE_SCN_ID__, __RE_LIB_ID__]
-    # TODO: by adding a new rule you have to verify the code for correctness
-        m = next(
-            filter(
-                lambda c: c, map(lambda x: search(x, str(s)), regexrules)), None)
-        if m is not None:
-            date = m.group('date') # FIXME: better date parser
-            if '.' in date: # %y.%m.%d format
-                date = datetime.strptime(date, '%y.%m.%d').date()
-            s.released = date # save date into the structure
-            try:
-                #s.title = m.group('title') or ''
-                s.title = sub('\'[A-Z]', lambda m: m.group(0).lower(), m.group('title') or '')
-                performers = [
-                    intview(x) for x in split(',|&', m.group('performers'))]
-            except IndexError as e:
-                performers = list() # temp performer list
-                tail = m.group('tail').lower()
-                while True: # try to recognize all participating performers
-                    performer = '' # reset
-                    # look-ahead window range, up to 3 tokens
-                    lookahead = range(min(tail.count('.') + 1, 3), 0, -1)
-                    # look for already known performers
-                    for key in ['.'.join(tail.split('.')[:x]) for x in lookahead]:
-                        if key in self.performers and key.count('.') <= 0:
-                             if ui.bool(f'Does {key} perform in {s}?'):
-                                performer = key; break
-                    if not performer: # there is no record in the dictionary
-                        ret, performer = ui.rfc(tail, s)
-                        if ret == RFCode.PERFORMER:
-                            pass
-                        elif ret == RFCode.TITLE:
-                            break
-                        elif ret == RFCode.SKIP_SCENE:
-                            return False
-                        else:
-                            logger.warning(f'An unknown Code "{ret}" received')
-                            return False
-                    # append a performer to the performers list
-                    performers.append(intview(performer)) # sinn?!
-                    # update the "tail"-string
-                    tail = tail[len(performer):].strip('.')
-                    # check conditions for exiting the while loop
-                    if not tail or 'and' not in tail:
-                        break
-                    if tail.startswith('and.'): tail = tail[4:] # erase string "and"
-                s.title = tail.replace('.', '').title()
-            # update the stats, participating performers
-            for x in performers:
-                self.performers[x] = self.performers.get(x, 0) + 1
-            s.performers = sorted(
-                [x.replace('.', ' ').title() for x in performers]) # save performers
-            sid = ''.join([x for x in m.group('site') if x.isalnum()]).lower()
-            publisher = self.publishers.get(sid, sid)
-            if publisher == sid and sid not in self.sitemap['undefined']:
-                self.sitemap['undefined'].append(sid)
-                logger.info(f'A new site "{sid}" added')
-            s.publisher = publisher # save scene publisher
-            return True
-        logger.log(REGEX, f'The scene doesn\'t match to the regex: "{s}"'); return False
+        regexrules = [__RE_SCN_ID__, __RE_LIB_ID__] # by adding new rules, verify the code
+        m = next(filter(bool, map(search, regexrules, [str(s)] * len(regexrules))), None)
+        if m is None:
+            logger.log(REGEX, f'The scene doesn\'t match to the regex: "{s}"')
+            return False
+        s.released = strtdate(m.group('date')) # save date
+        sid = ''.join(x for x in m.group('site') if x.isalnum()).lower()
+        publisher = self.publishers.get(sid)
+        if not (publisher or sid in self.sitemap['undefined']):
+            self.sitemap['undefined'].append(sid)
+            logger.info(f'A new publisher site "{sid}" added')
+        s.publisher = publisher or sid # save scene publisher into the structure
+        try:
+            s.setTitle(m.group('title')) # See the setTitle() implementation!
+            # opt: sub('\'[A-Z]', lambda x: x.group(0).lower(), m.group('title'))
+            performers = [bview(x) for x in split(',|&', m.group('performers'))]
+        except IndexError as e:
+            performers = list() # temp bviewed performer list
+            tail = m.group('tail').lower()
+            while True: # FIXME: implement a better logic for "performer search"
+                performer = '' # init&reset local variable
+                # look-ahead window range, up to 3 tokens
+                lookahead = range(min(tail.count('.') + 1, 3), 0, -1)
+                # look for already known performers
+                for key in ['.'.join(tail.split('.')[:x]) for x in lookahead]:
+                    if key in self.performers:
+                        question = f'Does "{key.title()}" perform in "{tail}"?'
+                        if not (key.count('.') or self.ui.question(question)):
+                            continue
+                        performer = key; break
+                if not performer: # no records found, perform a manual search
+                    ret, performer = self.ui.decision(tail, s)
+                    if ret == RFCode.PERFORMER:
+                        pass # everything is OK, go to the next instruction
+                    elif ret == RFCode.TITLE:
+                        break # leave the loop, the tail contains "title" only
+                    elif ret == RFCode.SKIP_SCENE:
+                        return False # attention! something went wrong
+                    else: logger.warning(f'An unknown Code "{ret}" received'); return False
+                # append a performer to the performers list
+                performers.append(bview(performer)) # sinn?!
+                # update the "tail"-string
+                tail = tail[len(performer):].strip('.')
+                # check conditions for exiting the while loop
+                if not tail or 'and.' not in tail:
+                    break
+                if tail.startswith('and.'): tail = tail[4:] # erase string "and"
+            s.setTitle(fview(tail)) # format the tail using predefined "fview"-fmt
+        # collection main statistics, update the database, count performers & publisher
+        for x in performers:
+            self.performers[x] = self.performers.get(x, 0) + 1
+        s.performers = sorted(fview(x) for x in performers); return True # save performers
 
     def relocate(self, s: Scene) -> None:
         '''
-        try to move a scene into the library directory
+        move a scene file into the library directory, handle duplicates
         '''
         if self.dry:
             logger.debug('Won\'t relocate the scene, DRY_MODE is on!')
@@ -197,9 +207,9 @@ class Manager:
             #     logger.debug(
             #         f'Won\'t move "{basename(s.path)}"')
             target = f'{sep}'.join(
-                [sep.join(self.out.split(sep)[:-1]), 'unsorted', basename(s.path)])
+                [sep.join(self.out.split(sep)[:-1]), 'unsorted', s.basename()])
         else:
-            n, famous = max([(self.performers[intview(i)], i) for i in s.performers])
+            n, famous = max([(self.performers[bview(i)], i) for i in s.performers])
             # try to move the scene into the target library
             suffix = join(famous[0], famous)
             if n < __MAGIC_NUM__:
@@ -213,31 +223,19 @@ class Manager:
             target = join(join(self.out, suffix), filename)
         # check if the scene exists
         if s.path != target:
-            logger.debug(f'The new scene location is "{target}"')
-            if not exists(target):
+            logger.debug(f'The new scene location is goin\' to be "{target}"')
+            override = True
+            if exists(target):
+                logger.warning(
+                    f'Oops! A copy already exists: "{basename(target)}"')
+                s1, s2 = human_readable(getsize(target)), human_readable(s.size)
+                override = self.ui.question(
+                    f'Do you want to replace it "{s1}" with yours copy "{s2}"? ')
+            if override:
                 makedirs(
                     dirname(target), exist_ok=True)
                 move(s.path, target); s.path = target
-            else:
-                logger.warning(f'Oops! A copy of "{basename(target)}" already exists!')
 
         # TODO: the current directory has to be deleted if it doesn't contain any video files
-
-    def save(self) -> None:
-        '''
-        save sitemap to the file if any changes occurred
-        '''
-        # sort performers in ascending order
-        self.sitemap['performers'] = sorted(self.performers.keys())
-        # count performers participated in fetched scenes
-        performers = sum(
-            x > 0 for k, x in self.performers.items())
-        # examine sitenmap for changes
-        if self.hash != md5(dumps(self.sitemap, ensure_ascii=False).encode('utf8')).hexdigest():
-            if not self.dry:
-                with open(join(self.app, 'sxtools.map.json'), 'w') as f:
-                    dump(self.sitemap, f)
-            logger.info('Saving sitemap in DRY_MODE takes no changes')
-        logger.info(f'{performers} actors perform in {len(self.queue)} scenes produced by n sites')
 
 # SxTools!MANAGER helps you to manage collections according to your wishes
