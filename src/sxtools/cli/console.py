@@ -1,9 +1,11 @@
+from itertools import zip_longest as zipl
 from os.path import abspath, exists
 from typing import Tuple
 
 from sxtools.core.manager import Manager, RFCode
 from sxtools.core.videoscene import Scene
 from sxtools.logging import REGEX, get_basic_logger
+from sxtools.utils import fview
 
 logger = get_basic_logger() # sXtools.log
 
@@ -76,6 +78,21 @@ class Console:
                     ':cl'])
             elif cmd.startswith(':f'):
                 self.fetch(abspath(' '.join(cmd.split()[1:])))
+            elif cmd.startswith('top'):
+                top = int(' '.join(cmd.split()[1:]) or self.manager.top)
+                perfs = sorted(self.manager.performers.items(), key=lambda x: x[1], reverse=True)[:top]
+                paysites = {}
+                x: Scene
+                for x in self.manager.queue:
+                    if x.publisher:
+                        paysites[x.publisher] = paysites.get(x.publisher, 0) + 1
+                paysites = sorted(paysites.items(), key=lambda x: x[1], reverse=True)[:top]
+                data = [
+                    ('Top', 'Performer', 'Count', 'Paysite', 'Count'), # caption
+                    *[(x, y[0][0], y[0][1], y[1][0], y[1][1]) for
+                    x, y in zip(range(1, len(perfs) + 1), zipl(perfs, paysites))]]
+                for id, performer, pc, paysite, sc in data:
+                    print(f'{str(id).zfill(3):^{5}} {fview(performer):^{20}} {pc:^{5}} {paysite:^{40}} {sc:^{5}}')
             elif cmd in [':a', 'analyse']:
                 s: Scene # type hinting, just for "vs code"
                 i = 0
