@@ -69,7 +69,7 @@ class Console:
             elif cmd == ':q':
                 return
             elif cmd in [':cl', 'commandlist']:
-                print([ # possible commands to the console
+                print([ # list of possible commands
                     ':v - print the version',
                     ':q - quit',
                     ':s - save',
@@ -84,8 +84,8 @@ class Console:
                 paysites = {}
                 x: Scene
                 for x in self.manager.queue:
-                    if x.publisher:
-                        paysites[x.publisher] = paysites.get(x.publisher, 0) + 1
+                    if x.paysite:
+                        paysites[x.paysite] = paysites.get(x.paysite, 0) + 1
                 paysites = sorted(paysites.items(), key=lambda x: x[1], reverse=True)[:top]
                 data = [
                     ('Top', 'Performer', 'Count', 'Paysite', 'Count'), # caption
@@ -102,7 +102,7 @@ class Console:
                         f'\n-------------------------\n'
                         f'> Name: {s.name()}\n'
                         f'> Performers: {s.perfs_as_string()}\n'
-                        f'> Released: {s.released} by {s.publisher} in {s.title or "None"}\n'
+                        f'> Released: {s.released} by {s.paysite} in {s.title or "None"}\n'
                         f'---------------------------')
                 logger.info(f'Recognized: {i} of {len(self.manager.queue)} scene(s)')
             elif cmd == ':s':

@@ -56,10 +56,9 @@ def main():
         help='limit the "in-app table size" to n rows',
         default=30) # limit the output to n rows
     parser.add_argument(
-        '--no-metadata',
+        '-s', '--scan',
         action='store_true',
-        dest='wo_analyse',
-        help='don\'t use ffprobe to get metadata',
+        help='scan scene(s) using "ffprobe"',
         default=False)
     parser.add_argument(
         '--asc',

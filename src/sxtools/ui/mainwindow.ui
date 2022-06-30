@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>927</width>
+    <height>517</height>
+   </rect>
+  </property>
+  <property name="font">
+   <font>
+    <bold>false</bold>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>SxTools!MANAGER</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>:/resources/light/video-camera.svg</normaloff>:/resources/light/video-camera.svg</iconset>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <layout class="QHBoxLayout" name="loNavigation">
+      <item>
+       <widget class="QLineEdit" name="leSearchField">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>230</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string/>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">letter-spacing: 1px;</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="placeholderText">
+         <string>SEARCH</string>
+        </property>
+        <property name="clearButtonEnabled">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblFoundA">
+        <property name="font">
+         <font>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Found:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblFoundB">
+        <property name="text">
+         <string>0</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblSearch">
+        <property name="text">
+         <string>Search in:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rbPerformer">
+        <property name="text">
+         <string>Performers</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">bgFilterKeyColumns</string>
+        </attribute>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rbPaySite">
+        <property name="text">
+         <string>Sites</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">bgFilterKeyColumns</string>
+        </attribute>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rbTitle">
+        <property name="text">
+         <string>Titles</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">bgFilterKeyColumns</string>
+        </attribute>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="1" column="0">
+     <widget class="QListView" name="sceneView">
+      <property name="font">
+       <font>
+        <italic>false</italic>
+        <bold>false</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QTableView::item
+{
+  border: 0px;
+  padding: 5px;
+}</string>
+      </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOn</enum>
+      </property>
+      <property name="sizeAdjustPolicy">
+       <enum>QAbstractScrollArea::AdjustIgnored</enum>
+      </property>
+      <property name="alternatingRowColors">
+       <bool>true</bool>
+      </property>
+      <property name="selectionMode">
+       <enum>QAbstractItemView::ExtendedSelection</enum>
+      </property>
+      <property name="selectionBehavior">
+       <enum>QAbstractItemView::SelectRows</enum>
+      </property>
+      <property name="textElideMode">
+       <enum>Qt::ElideNone</enum>
+      </property>
+      <property name="verticalScrollMode">
+       <enum>QAbstractItemView::ScrollPerPixel</enum>
+      </property>
+      <property name="horizontalScrollMode">
+       <enum>QAbstractItemView::ScrollPerPixel</enum>
+      </property>
+      <property name="resizeMode">
+       <enum>QListView::Fixed</enum>
+      </property>
+      <property name="spacing">
+       <number>0</number>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>927</width>
+     <height>19</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="mFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="aImport"/>
+    <addaction name="aRelocate"/>
+    <addaction name="aSave"/>
+    <addaction name="separator"/>
+    <addaction name="aQuit"/>
+   </widget>
+   <widget class="QMenu" name="mEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="aSettings"/>
+   </widget>
+   <widget class="QMenu" name="mHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="aAbout"/>
+    <addaction name="aAboutQt"/>
+    <addaction name="separator"/>
+    <addaction name="aGitHub"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionSortByPerformers"/>
+    <addaction name="actionSortByName"/>
+    <addaction name="actionSortByPaysite"/>
+    <addaction name="separator"/>
+    <addaction name="actionReverseOrder"/>
+    <addaction name="separator"/>
+    <addaction name="aScan"/>
+    <addaction name="aClearCache"/>
+    <addaction name="separator"/>
+    <addaction name="actionFilterTagged"/>
+    <addaction name="actionFilterUntagged"/>
+   </widget>
+   <addaction name="mFile"/>
+   <addaction name="mEdit"/>
+   <addaction name="menuView"/>
+   <addaction name="mHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="aImport">
+   <property name="icon">
+    <iconset theme="folder-open">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Import Scene(s)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="aQuit">
+   <property name="icon">
+    <iconset theme="application-exit">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Exit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="aAbout">
+   <property name="icon">
+    <iconset theme="help-about">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>About SxTools!MANAGER</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
+  </action>
+  <action name="aAboutQt">
+   <property name="text">
+    <string>About Qt</string>
+   </property>
+  </action>
+  <action name="aGitHub">
+   <property name="icon">
+    <iconset theme="view-refresh">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Check for Updates @ GitHub</string>
+   </property>
+  </action>
+  <action name="aSettings">
+   <property name="icon">
+    <iconset theme="preferences-desktop">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Settings</string>
+   </property>
+  </action>
+  <action name="aRelocate">
+   <property name="text">
+    <string>Move Collection</string>
+   </property>
+  </action>
+  <action name="aSave">
+   <property name="icon">
+    <iconset theme="document-save">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Save &quot;sxtools.map.json&quot;</string>
+   </property>
+   <property name="toolTip">
+    <string>Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionSortByName">
+   <property name="text">
+    <string>Sort by Title</string>
+   </property>
+  </action>
+  <action name="actionSortByPerformers">
+   <property name="text">
+    <string>Sort by Performers</string>
+   </property>
+  </action>
+  <action name="actionSortByPaysite">
+   <property name="text">
+    <string>Sort by Paysite</string>
+   </property>
+   <property name="toolTip">
+    <string>Sort by Paysite</string>
+   </property>
+  </action>
+  <action name="actionReverseOrder">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Reverse Sort Order</string>
+   </property>
+  </action>
+  <action name="actionFilterUntagged">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Filter out Untagged</string>
+   </property>
+  </action>
+  <action name="actionFilterTagged">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Filter out Tagged</string>
+   </property>
+  </action>
+  <action name="aScan">
+   <property name="text">
+    <string>Perform Scan</string>
+   </property>
+  </action>
+  <action name="aClearCache">
+   <property name="text">
+    <string>Clear Cache [0 MiB]</string>
+   </property>
+  </action>
+ </widget>
+ <tabstops>
+  <tabstop>rbPerformer</tabstop>
+  <tabstop>rbPaySite</tabstop>
+  <tabstop>rbTitle</tabstop>
+  <tabstop>leSearchField</tabstop>
+  <tabstop>sceneView</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>aQuit</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>493</x>
+     <y>328</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <buttongroups>
+  <buttongroup name="bgFilterKeyColumns"/>
+ </buttongroups>
+</ui>

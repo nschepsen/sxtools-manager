@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DecisionDialog</class>
+ <widget class="QDialog" name="DecisionDialog">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>516</width>
+    <height>218</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>SxTools!MANAGER - Make your Decision</string>
+  </property>
+  <property name="modal">
+   <bool>false</bool>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QGroupBox" name="gbContext">
+     <property name="title">
+      <string>Context:</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QLabel" name="lblContext">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QGroupBox" name="gbOptions">
+     <property name="title">
+      <string>Options:</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <layout class="QVBoxLayout" name="loOptions">
+        <item>
+         <layout class="QHBoxLayout" name="loOptionO">
+          <item>
+           <widget class="QRadioButton" name="rbOptionOther">
+            <property name="text">
+             <string>Other</string>
+            </property>
+            <attribute name="buttonGroup">
+             <string notr="true">bgOptions</string>
+            </attribute>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="leOption">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">padding-left: 5px;</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="rbOptionNone">
+          <property name="text">
+           <string>None of Them</string>
+          </property>
+          <attribute name="buttonGroup">
+           <string notr="true">bgOptions</string>
+          </attribute>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <layout class="QHBoxLayout" name="loActions">
+     <item>
+      <widget class="QLabel" name="lblAnnotation">
+       <property name="text">
+        <string>Select &quot;None&quot; if the tail contains a scene name only</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="spcrActions">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>27</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnConfirm">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>OK</string>
+       </property>
+       <property name="icon">
+        <iconset resource="icons.qrc">
+         <normaloff>:/resources/light/check-mark.svg</normaloff>:/resources/light/check-mark.svg</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnSkip">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Cancel</string>
+       </property>
+       <property name="icon">
+        <iconset resource="icons.qrc">
+         <normaloff>:/resources/light/close.svg</normaloff>:/resources/light/close.svg</iconset>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>btnConfirm</sender>
+   <signal>clicked()</signal>
+   <receiver>DecisionDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>379</x>
+     <y>192</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>257</x>
+     <y>108</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btnSkip</sender>
+   <signal>clicked()</signal>
+   <receiver>DecisionDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>465</x>
+     <y>192</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>257</x>
+     <y>108</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <buttongroups>
+  <buttongroup name="bgOptions"/>
+ </buttongroups>
+</ui>

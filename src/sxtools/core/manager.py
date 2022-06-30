@@ -13,7 +13,7 @@ from sxtools.core.rfcode import RFCode  # FIXME: any WAs maybe?!
 from sxtools.core.videoscene import Scene
 from sxtools.logging import REGEX, get_basic_logger
 logger = get_basic_logger()  # sXtools.log
-from sxtools.utils import bview, fview, human_readable, sortmap, strtdate  # back-&frontend repr
+from sxtools.utils import bview, cache, fview, human_readable, sortmap, strtdate  # back-&frontend repr
 
 '''
 SxTools!MANAGER helps you to manage collections according to your wishes
@@ -45,8 +45,9 @@ class Manager:
         self.src = args.input
         self.out = args.output
         self.top = args.top # used by CLI only
-        self.is_analyse_req = not args.wo_analyse
+        self.is_analyse_req = not args.scan
         self.dry = args.dryrun
+        self.asc = args.asc
         self.caption = f'{__project__} v{__version__}'
         self.publishers = {}
         self.scenes, self.queue = list(), list()
@@ -106,19 +107,22 @@ class Manager:
 
     def save(self) -> None:
         '''
-        dump sitemap to a file sorting by keys, values in ascending order
+        dump sitemap to a file sorting by keys and then by values in ascending order
         '''
+        self.sitemap['performers'] = [*self.performers]
         sortmap(self.sitemap)
         # count performers participated in fetched scenes
         performers = sum(
-            x > 0 for k, x in self.performers.items())
+            v > 0 for v in self.performers.values())
         # examine sitenmap for changes
         if self.hash != md5(dumps(self.sitemap, ensure_ascii=False, sort_keys=True).encode('utf8')).hexdigest():
             if not self.dry:
                 with open(join(self.app, 'sxtools.map.json'), 'w') as f:
                     dump(self.sitemap, f)
-            logger.info('Saving sitemap in DRY_MODE takes no changes')
-        logger.info(f'{performers} actors perform in {len(self.queue)} scenes')
+                logger.info('Sitemap changes were successfully saved')
+            else:
+                logger.info('Saving sitemap in DRY_MODE takes no changes')
+        logger.info(f'Statistics: {performers} actors perform in {len(self.queue)} scenes')
 
     def fetch(self, directory: str) -> None:
         '''
@@ -152,9 +156,9 @@ class Manager:
         if not (publisher or sid in self.sitemap['undefined']):
             self.sitemap['undefined'].append(sid)
             logger.info(f'A new publisher site "{sid}" added')
-        s.publisher = publisher or sid # save scene publisher into the structure
+        s.paysite = publisher or sid # save scene publisher into the structure
         try:
-            s.setTitle(m.group('title')) # See the setTitle() implementation!
+            s.set_title(m.group('title')) # See the setTitle() implementation!
             # opt: sub('\'[A-Z]', lambda x: x.group(0).lower(), m.group('title'))
             performers = [bview(x) for x in split(',|&', m.group('performers'))]
         except IndexError as e:
@@ -188,7 +192,7 @@ class Manager:
                 if not tail or 'and.' not in tail:
                     break
                 if tail.startswith('and.'): tail = tail[4:] # erase string "and"
-            s.setTitle(fview(tail)) # format the tail using predefined "fview"-fmt
+            s.set_title(fview(tail)) # format the tail using predefined "fview"-fmt
         # collection main statistics, update the database, count performers & publisher
         for x in performers:
             self.performers[x] = self.performers.get(x, 0) + 1
@@ -201,7 +205,7 @@ class Manager:
         if self.dry:
             logger.debug('Won\'t relocate the scene, DRY_MODE is on!')
             return
-        if not s.released or not s.performers or not s.publisher:
+        if not s.released or not s.performers or not s.paysite: # use not s.in_valid() instead
             # # there's no metadata, so it couldn't be renamed
             # if DONTMOVEFLAG:
             #     logger.debug(
@@ -218,23 +222,26 @@ class Manager:
             filename = '({}) {}, {}{}.{}'.format(
                 s.released,
                 s.perfs_as_string(),
-                s.publisher,
+                s.paysite,
                 f', {s.title}' if s.title else '', s.ext)
             target = join(join(self.out, suffix), filename)
         # check if the scene exists
         if s.path != target:
             logger.debug(f'The new scene location is goin\' to be "{target}"')
-            override = True
+            isMoveable = True
             if exists(target):
                 logger.warning(
                     f'Oops! A copy already exists: "{basename(target)}"')
                 s1, s2 = human_readable(getsize(target)), human_readable(s.size)
-                override = self.ui.question(
+                isMoveable = self.ui.question(
                     f'Do you want to replace it "{s1}" with yours copy "{s2}"? ')
-            if override:
+            if isMoveable:
                 makedirs(
                     dirname(target), exist_ok=True)
-                move(s.path, target); s.path = target
+                thumbnail = cache(s.basename())
+                if s.basename() != basename(target) and thumbnail:
+                    move(thumbnail, cache(basename(target), True))
+                move(s.path, target); s.path = target # Good Luck! my friend
 
         # TODO: the current directory has to be deleted if it doesn't contain any video files
 
