@@ -74,7 +74,10 @@ class Scene:
         '''
         return scene's mimetype, e.g. video-mp4
         '''
-        return MimeTypes().guess_type(self.path)[0].replace(chr(47), chr(45))
+        mt = MimeTypes().guess_type(self.path)[0]
+        if not mt:
+            mt = 'video'
+        return mt.replace(chr(47), chr(45)) # return mimetype
 
     def scan(self) -> None:
         '''
