@@ -45,7 +45,7 @@ class Manager:
         self.src = args.input
         self.out = args.output
         self.top = args.top # used by CLI only
-        self.is_analyse_req = not args.scan
+        self.is_analyse_req = args.scan
         self.dry = args.dryrun
         self.asc = args.asc
         self.caption = f'{__project__} v{__version__}'
