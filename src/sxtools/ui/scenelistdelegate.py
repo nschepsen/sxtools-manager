@@ -1,6 +1,6 @@
 from PySide6.QtCore import QRect, QSize, Qt, QPoint
-from PySide6.QtGui import QPainter, QPalette, QColor, QFont, QImage, QFontMetrics, QIcon, QBrush, QPixmap, QWindow
-from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem
+from PySide6.QtGui import QBrush, QFont, QFontMetrics, QImage, QPainter, QPalette
+from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem, QApplication
 from sxtools.ui.scenelistmodel import SceneModel
 from sxtools.utils import human_readable
 
@@ -10,8 +10,12 @@ class SceneDelegate(QStyledItemDelegate):
     def __init__(self, parent=None) -> None:
         '''
         '''
-        super(SceneDelegate, self).__init__(parent)
-        self.model = self.parent().model()
+        super(SceneDelegate, self).__init__(parent) # init parent methods
+
+        self.pFont = QFont(
+            QApplication.font().family(), 12, QFont.Bold)
+        self.sFont = QFont(
+            QApplication.font().family(), 13, QFont.Bold)
 
     @staticmethod
     def circledIcon(icon: QImage, size: int = 48) -> QImage:
@@ -51,61 +55,53 @@ class SceneDelegate(QStyledItemDelegate):
         painter.setPen(option.palette.color(QPalette.Normal, cr))
         painter.setRenderHint(QPainter.Antialiasing, True)
         painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        # painter.setFont(QFont('InputMono', painter.font().pointSize(), QFont.Condensed, italic=True))
+
         defaultFont = painter.font() # for fall-back purposes
-        perfsFont, sizeFont = painter.font(), painter.font()
-        perfsFont.setBold(True)
-        perfsFont.setPointSize(defaultFont.pointSize() * 1.4)
-        perfsFM = QFontMetrics(perfsFont)
-        perfsSize = perfsFM.size(QFont.MixedCase, performers)
+
+        perfsSize = QFontMetrics(self.pFont).size(QFont.MixedCase, performers)
         paysiteSize = painter.fontMetrics().size(0, paysite)
         titleSize = painter.fontMetrics().size(0, title)
         releasedSize = painter.fontMetrics().size(0, released)
-        sizeFont.setBold(True)
-        sizeFont.setPointSize(defaultFont.pointSize() * 1.5)
-        sizeFM = QFontMetrics(sizeFont)
-        sizeSize = sizeFM.size(QFont.MixedCase, size)
-        resolutionSize = painter.fontMetrics().size(0, resolution)
-        # layout defining
+        sizeSize = QFontMetrics(self.sFont).size(0, size)
+        resolutionSize = painter.fontMetrics().size(QFont.MixedCase, resolution)
+
         x, y, w, h = option.rect.adjusted(5, 5, -5, -5).getRect() # layout coordinates
-        descColSize = max(
-            perfsSize.width(), paysiteSize.width(), titleSize.width())
-        infoColSize = max(
-            releasedSize.width(), sizeSize.width(), resolutionSize.width())
-        descColX, infoColX = x + h + 5, w - infoColSize
-        # column 1: draw circle thumbnail
+        c2ndW = max(i.width() for i in [
+            perfsSize, paysiteSize, titleSize])
+        c3rdW = max(i.width() for i in [
+            releasedSize, sizeSize, resolutionSize])
+        c2ndX, c3rdX = x + h + 5, w - c3rdW
+        # column 1: Thumbnail
         painter.drawImage(QRect(x, y, h, h), SceneDelegate.circledIcon(thumbnail, h))
-        # calculate rows count
-        rows = sum(map(bool, [performers, paysite, not title.startswith(performers)]))
-        # column 2: draw perfs, paysite & title
-        if rows == 3:
-            performersRect = QRect(descColX, y, descColSize, perfsSize.height())
-            painter.setFont(perfsFont)
-            painter.drawText(performersRect, Qt.AlignLeft, performers)
+        # column 2: Description
+        lines = sum(
+            map(bool, [
+                performers,
+                paysite,
+                not title.startswith(performers)]))
+        titleRect = QRect(c2ndX, y, c2ndW, h) # baseRect for 1 liner
+        if lines > 1:
+            baseRect = QRect(
+                c2ndX,
+                y if lines == 3 else y + (h - (perfsSize.height() + 1 + paysiteSize.height()) >> 1),
+                c2ndW,
+                perfsSize.height())
+            painter.setFont(self.pFont)
+            painter.drawText(baseRect, Qt.AlignLeft, performers)
             painter.setFont(defaultFont)
-            paysiteRect = performersRect.adjusted(
-                0, performersRect.height() + 1, 0, paysiteSize.height() + 1)
+            paysiteRect = baseRect.adjusted(
+                0, baseRect.height() + 1, 0, paysiteSize.height() + 1)
             painter.drawText(paysiteRect, Qt.AlignLeft, paysite)
-            titleRect = paysiteRect.adjusted(0, paysiteRect.height() + 1, 0, titleSize.height() + 1)
-            painter.drawText(titleRect, Qt.AlignLeft, title)
-        elif rows == 2:
-            descColY = y + (h - (perfsSize.height() + paysiteSize.height()) >> 1)
-            performersRect = QRect(descColX, descColY, descColSize, perfsSize.height())
-            painter.setFont(perfsFont)
-            painter.drawText(performersRect, Qt.AlignLeft, performers)
-            painter.setFont(defaultFont)
-            paysiteRect = performersRect.adjusted(
-                0, performersRect.height() + 1, 0, paysiteSize.height() + 1)
-            painter.drawText(paysiteRect, Qt.AlignLeft, paysite)
-        else: # 1 row only
-            titleRect = QRect(descColX, y, descColSize, h)
+            titleRect = paysiteRect.adjusted(
+                0, paysiteRect.height() + 1, 0, titleSize.height() + 1)
+        if lines != 2:
             painter.drawText(titleRect, Qt.AlignLeft | Qt.AlignVCenter, title)
-        # columns 3: draw date, size & resolution
-        releasedRect = QRect(infoColX, y, infoColSize, releasedSize.height())
+        # column 3: Information
+        releasedRect = QRect(c3rdX, y, c3rdW, releasedSize.height())
         painter.drawText(releasedRect, Qt.AlignHCenter, released)
         sizeRect = releasedRect.adjusted(
             0, releasedRect.height() + 1, 0, sizeSize.height() + 1)
-        painter.setFont(sizeFont)
+        painter.setFont(self.sFont)
         painter.drawText(sizeRect, Qt.AlignCenter, size)
         painter.setFont(defaultFont)
         resolutionRect = sizeRect.adjusted(0, sizeRect.height() + 1, 0, resolutionSize.height() + 1)
@@ -114,4 +110,5 @@ class SceneDelegate(QStyledItemDelegate):
     def sizeHint(self, option: QStyleOptionViewItem, index) -> QSize:
         '''
         '''
-        return QSize(58, 58) # TODO: implement a better way to estimate the size
+        h = 5 + QFontMetrics(option.font).height() + 1 + QFontMetrics(self.pFont).height() + 1 + QFontMetrics(option.font).height() + 5
+        return QSize(h, h) # TODO: implement a better way to estimate the size
