@@ -111,6 +111,14 @@ class Scene:
                     '-i', self.path,
                     '-vframes', '1',
                     cache(self.basename(), True), '-y'])
+                side = min(self.w, self.h)
+                call(['convert',
+                    cache(self.basename()),
+                    '-gravity', 'Center',
+                    '-crop', f'{side}x{side}+0+0',
+                    #'-unsharp', '0.25x0.25+8+0.065',
+                    '-resize', '57',
+                    '-quality', '90', cache(self.basename())])
             self.ffprobed = True
         except (FileNotFoundError) as e:
             logger.warning(f'No such file or directory: {e.filename}')
