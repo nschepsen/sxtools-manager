@@ -4,3 +4,8 @@ class SceneFilter(QSortFilterProxyModel):
     
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
+
+    def sync(self, dataset) -> None:
+        '''
+        '''
+        self.sourceModel().sync(dataset)

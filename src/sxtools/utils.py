@@ -88,7 +88,7 @@ def check_updates() -> str:
     except error.HTTPError as e:
         logger.warning(f'{e} (check failed)')
         return 'no information, try later again'
-    return 'latest' if version == __version__ else 'development build' if version < __version__ else 'outdated'
+    return 'latest' if version == __version__ else 'development' if version < __version__ else 'outdated'
 
 def table_readable(value: int) -> str:
     '''

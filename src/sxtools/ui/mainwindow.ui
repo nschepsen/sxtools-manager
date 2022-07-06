@@ -193,7 +193,7 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="aImport"/>
+    <addaction name="aOpen"/>
     <addaction name="aRelocate"/>
     <addaction name="aSave"/>
     <addaction name="separator"/>
@@ -201,8 +201,10 @@
    </widget>
    <widget class="QMenu" name="mEdit">
     <property name="title">
-     <string>Edit</string>
+     <string>Collections</string>
     </property>
+    <addaction name="actionAdd_a_Collection"/>
+    <addaction name="separator"/>
     <addaction name="aSettings"/>
    </widget>
    <widget class="QMenu" name="mHelp">
@@ -212,7 +214,7 @@
     <addaction name="aAbout"/>
     <addaction name="aAboutQt"/>
     <addaction name="separator"/>
-    <addaction name="aGitHub"/>
+    <addaction name="aUpdate"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -236,13 +238,13 @@
    <addaction name="mHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="aImport">
+  <action name="aOpen">
    <property name="icon">
     <iconset theme="folder-open">
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Import Scene(s)</string>
+    <string>Open</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -276,8 +278,11 @@
    <property name="text">
     <string>About Qt</string>
    </property>
+   <property name="menuRole">
+    <enum>QAction::AboutQtRole</enum>
+   </property>
   </action>
-  <action name="aGitHub">
+  <action name="aUpdate">
    <property name="icon">
     <iconset theme="view-refresh">
      <normaloff>.</normaloff>.</iconset>
@@ -292,12 +297,12 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Settings</string>
+    <string>General Settings</string>
    </property>
   </action>
   <action name="aRelocate">
    <property name="text">
-    <string>Move Collection</string>
+    <string>Add to Collection</string>
    </property>
   </action>
   <action name="aSave">
@@ -306,7 +311,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Save &quot;sxtools.map.json&quot;</string>
+    <string>Save</string>
    </property>
    <property name="toolTip">
     <string>Save</string>
@@ -368,6 +373,11 @@
   <action name="aClearCache">
    <property name="text">
     <string>Clear Cache [0 MiB]</string>
+   </property>
+  </action>
+  <action name="actionAdd_a_Collection">
+   <property name="text">
+    <string>Add a Collection</string>
    </property>
   </action>
  </widget>

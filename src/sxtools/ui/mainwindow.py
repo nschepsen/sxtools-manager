@@ -1,20 +1,23 @@
 from os import scandir, unlink
 from subprocess import call
 from typing import Tuple
-from PySide6.QtCore import QSortFilterProxyModel, Qt
-from PySide6.QtWidgets import QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QRadioButton
+
+from PySide6.QtCore import QModelIndex, QSortFilterProxyModel, Qt, Slot
+from PySide6.QtWidgets import QFileDialog, QMainWindow, QMessageBox,QProgressDialog, QRadioButton
+
+from sxtools import __date__, __author__, __email__, __status__, __version__
 from sxtools.core.manager import Manager
 from sxtools.core.rfcode import RFCode
 from sxtools.core.videoscene import Scene
 from sxtools.logging import get_basic_logger
+from sxtools.ui.scenefilter import SceneFilter
 logger = get_basic_logger()  # see ~/.config/sxtools/sXtools.log
 # re-build .ui-files as the case may be, use pyside6-uic
 from sxtools.ui.compiled.mainwindow import Ui_MainWindow
 from sxtools.ui.decisiondialog import DecisionDialog
-from sxtools.ui.scenefilter import SceneFilter
 from sxtools.ui.scenelistdelegate import SceneDelegate
 from sxtools.ui.scenelistmodel import SceneModel
-from sxtools.utils import bview, cache, cache_size, fview, human_readable
+from sxtools.utils import bview, cache, cache_size, check_updates, fview, human_readable
 
 
 class MainWindow(QMainWindow):
@@ -28,46 +31,75 @@ class MainWindow(QMainWindow):
         self.manager.ui, self.ui = self, Ui_MainWindow()
         self.ui.setupUi(self) # load UI
         self.setWindowTitle(f'{m.caption}')
-        self.ui.sceneView.setModel(
-            SceneModel(self.manager.queue, self))
-        self.ui.sceneView.setItemDelegate(
-            SceneDelegate(self.ui.sceneView))
+        baseModel = SceneModel(self.manager.queue, self)
+        proxy = SceneFilter(self)
+        proxy.setSourceModel(baseModel)
+        self.ui.sceneView.setModel(proxy)
+        self.ui.sceneView.setItemDelegate(SceneDelegate(self.ui.sceneView))
+        self.ui.sceneView.verticalScrollBar().setSingleStep(5)
         # connect UI slots
-        self.ui.sceneView.doubleClicked.connect(self.openVideo)
+        self.ui.sceneView.doubleClicked.connect(self.play)
         # connect UI actions [FILE]
-        self.ui.aImport.triggered.connect(self.load)
+        self.ui.aOpen.triggered.connect(self.open)
         self.ui.aRelocate.triggered.connect(self.relocate)
         self.ui.aSave.triggered.connect(self.save)
         # connect UI actions [EDIT]
         # self.ui.aSettings.triggered.connect(self.save)
         # connect UI actions [VIEW]
-        self.ui.aScan.triggered.connect(self.deepScan)
+        self.ui.aScan.triggered.connect(self.scan)
         self.ui.aClearCache.triggered.connect(self.clearCache)
         # connect UI actions [HELP]
-        # self.ui.aAbout.triggered.connect(self.save)
-        # self.ui.aAboutQt.triggered.connect(self.save)
-        # self.ui.aGitHub.triggered.connect(self.save)
+        self.ui.aAbout.triggered.connect(self.about)
+        self.ui.aAboutQt.triggered.connect(self.aboutQt)
+        self.ui.aUpdate.triggered.connect(self.update)
         self.ui.aClearCache.setText(f'Clear Cache [{human_readable(cache_size())}]')
-
-    def relocate(self) -> None:
-        '''
-        '''
-        for s in self.ui.sceneView.model().scenelist:
-            self.manager.relocate(s)
-        # TODO: relocate selected scene(s) item-wise, otherwise all at once
-
-    def openVideo(self, index):
+    @Slot(QModelIndex)
+    def play(self, index) -> None:
         '''
         '''
         # TODO: internal video player
-        call(['mpv', index.model().scenelist[index.row()].path])
-
-    def deepScan(self):
+        call(['mpv', index.model().mapToSource(index).model().scenelist[index.row()].path])
+    @Slot()
+    def open(self) -> None:
+        '''
+        Look for scene(s), analyse and load 'em into a View
+        '''
+        self.manager.queue.clear() # reset the queue
+        src = QFileDialog.getExistingDirectory(self,
+            'Open Directory',
+            self.manager.src,
+            QFileDialog.ShowDirsOnly)
+        self.manager.fetch(src) # populate queue w scenes
+        n = len(self.manager.queue)
+        ret = 0
+        for x in self.manager.queue:
+            ret += self.manager.analyse(x)
+        self.ui.sceneView.model().sync(self.manager.queue)
+        self.ui.statusbar.showMessage(
+            f'Imported {ret} of {n} scene(s) matched to the regex')
+    @Slot()
+    def relocate(self) -> None:
         '''
         '''
-        scenelist = self.ui.sceneView.model().scenelist
+        output = QFileDialog.getExistingDirectory(self,
+            'Save to Collection',
+            self.manager.out,
+            QFileDialog.ShowDirsOnly)
+        if not output:
+            return
+        self.manager.out = output
+        for s in self.manager.queue:
+            self.manager.relocate(s)
+        # TODO: relocate selected scene(s) item-wise, otherwise all at once
+    @Slot()
+    def scan(self) -> None:
+        '''
+        '''
+        scenelist = self.manager.queue # self.ui.sceneView.model().scenelist
         progress = QProgressDialog(
-            "Scanning Files", "Cancel", 0, len(scenelist), self)
+            'Scanning Files',
+            'Cancel',
+            0, len(scenelist), self)
         progress.setMinimumWidth(400)
         progress.setCancelButton(None)
         progress.setWindowModality(Qt.WindowModal)
@@ -76,11 +108,32 @@ class MainWindow(QMainWindow):
         for s in scenelist:
             if progress.wasCanceled():
                 break
-            s.scan()
+            s.scan() # perform a scan
             i += 1
             progress.setValue(i)
-        self.ui.aClearCache.setText(f'Clear Cache [{human_readable(cache_size())}]')
-
+        self.ui.aClearCache.setText(
+            f'Clear Cache [{human_readable(cache_size())}]')
+    @Slot()
+    def about(self) -> None:
+        '''
+        '''
+        QMessageBox.about(self, 'SxTools!MANAGER <About>',
+            f'<b>SxTools!MANAGER</b> {__version__}'
+            f'<br><br>'
+            f'<b>Author</b>: {__author__} "{__email__}"')
+    @Slot()
+    def aboutQt(self) -> None:
+        '''
+        '''
+        QMessageBox.aboutQt(self, 'SxTools!MANAGER <About Qt>')
+    @Slot()
+    def update(self) -> None:
+        '''
+        '''
+        ret = QMessageBox.information(self,
+            'SxTools!MANAGER <Updates>',
+            f'You are using {check_updates()} build ({__version__})')
+    @Slot()
     def clearCache(self):
         '''
         Remove thumbnails from the Cache
@@ -91,21 +144,6 @@ class MainWindow(QMainWindow):
                     unlink(entry.path)
         self.ui.sceneView.setFocus() # TODO: force to repaint
         self.ui.aClearCache.setText(f'Clear Cache [{human_readable(cache_size())}]')
-
-    def load(self) -> None:
-        '''
-        Look for scene(s), analyse and load 'em into a View
-        '''
-        self.manager.queue.clear() # reset the queue
-        path = QFileDialog.getExistingDirectory(
-            self, 'Select a directory', self.manager.src)
-        self.manager.fetch(path)
-        n = len(self.manager.queue) # scenes number
-        ret = 0
-        for x in self.manager.queue:
-            ret += self.manager.analyse(x)
-        self.ui.sceneView.model().sync(self.manager.queue)
-        self.ui.statusbar.showMessage(f'Imported {ret} of {n} scene(s) matched to the regex')
 
     def save(self) -> None: self.manager.save()
 
