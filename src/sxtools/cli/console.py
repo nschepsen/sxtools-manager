@@ -102,7 +102,7 @@ class Console:
                         f'\n-------------------------\n'
                         f'> Name: {s.name()}\n'
                         f'> Performers: {s.perfs_as_string()}\n'
-                        f'> Released: {s.released} by {s.paysite} in {s.title or "None"}\n'
+                        f'> Released: {s.released} by "{s.paysite}" in "{s.title}"\n'
                         f'---------------------------')
                 logger.info(f'Recognized: {i} of {len(self.manager.queue)} scene(s)')
             elif cmd == ':s':
