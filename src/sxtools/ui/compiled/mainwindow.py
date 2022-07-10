@@ -153,7 +153,7 @@ class Ui_MainWindow(object):
         self.loNavigation.setObjectName(u"loNavigation")
         self.leSearchField = QLineEdit(self.centralwidget)
         self.leSearchField.setObjectName(u"leSearchField")
-        self.leSearchField.setMinimumSize(QSize(0, 30))
+        self.leSearchField.setMinimumSize(QSize(300, 30))
         self.leSearchField.setMaximumSize(QSize(230, 16777215))
         self.leSearchField.setStyleSheet(u"letter-spacing: 1px;")
         self.leSearchField.setAlignment(Qt.AlignCenter)
@@ -161,16 +161,16 @@ class Ui_MainWindow(object):
 
         self.loNavigation.addWidget(self.leSearchField)
 
-        self.lblFoundA = QLabel(self.centralwidget)
-        self.lblFoundA.setObjectName(u"lblFoundA")
-        self.lblFoundA.setFont(font)
+        self.lblFiltredLabel = QLabel(self.centralwidget)
+        self.lblFiltredLabel.setObjectName(u"lblFiltredLabel")
+        self.lblFiltredLabel.setFont(font)
 
-        self.loNavigation.addWidget(self.lblFoundA)
+        self.loNavigation.addWidget(self.lblFiltredLabel)
 
-        self.lblFoundB = QLabel(self.centralwidget)
-        self.lblFoundB.setObjectName(u"lblFoundB")
+        self.lblFiltredCount = QLabel(self.centralwidget)
+        self.lblFiltredCount.setObjectName(u"lblFiltredCount")
 
-        self.loNavigation.addWidget(self.lblFoundB)
+        self.loNavigation.addWidget(self.lblFiltredCount)
 
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
@@ -329,8 +329,8 @@ class Ui_MainWindow(object):
         self.leSearchField.setToolTip("")
 #endif // QT_CONFIG(tooltip)
         self.leSearchField.setPlaceholderText(QCoreApplication.translate("MainWindow", u"SEARCH", None))
-        self.lblFoundA.setText(QCoreApplication.translate("MainWindow", u"Found:", None))
-        self.lblFoundB.setText(QCoreApplication.translate("MainWindow", u"0", None))
+        self.lblFiltredLabel.setText(QCoreApplication.translate("MainWindow", u"Found:", None))
+        self.lblFiltredCount.setText(QCoreApplication.translate("MainWindow", u"0", None))
         self.lblSearch.setText(QCoreApplication.translate("MainWindow", u"Search in:", None))
         self.rbPerformers.setText(QCoreApplication.translate("MainWindow", u"Performers", None))
         self.rbPaysites.setText(QCoreApplication.translate("MainWindow", u"Paysites", None))

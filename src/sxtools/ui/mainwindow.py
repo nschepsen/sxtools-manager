@@ -43,7 +43,7 @@ class MainWindow(QMainWindow):
         proxy.setSourceModel(baseModel)
         self.ui.sceneView.setModel(proxy)
         self.ui.sceneView.setItemDelegate(SceneDelegate(self.ui.sceneView))
-        self.ui.sceneView.verticalScrollBar().setSingleStep(5)
+        #self.ui.sceneView.verticalScrollBar().setSingleStep(5)
         # crete action group [SortMode]
         sortModes = QActionGroup(self)
         sortModes.addAction(self.ui.actionSortByPerformers)
@@ -98,6 +98,7 @@ class MainWindow(QMainWindow):
         self.ui.sceneView.model().sourceModel().sync(self.manager.queue)
         self.ui.statusbar.showMessage(
             f'Imported {ret} of {n} scene(s) matched to the regex')
+        self.ui.lblFiltredCount.setText(str(self.ui.sceneView.model().rowCount()))
     @Slot()
     def relocate(self) -> None:
         '''
@@ -141,6 +142,7 @@ class MainWindow(QMainWindow):
         '''
         '''
         self.ui.sceneView.model().setFilterFixedString(string)
+        self.ui.lblFiltredCount.setText(str(self.ui.sceneView.model().rowCount()))
     @Slot(QRadioButton, bool)
     def onFilterRoleChanged(self, btn: QRadioButton, toggled: bool) -> None:
         '''
@@ -157,6 +159,8 @@ class MainWindow(QMainWindow):
                 SceneDataRole.PerformersRole,
             }.get(btn.objectName(), SceneDataRole.PerformersRole)
         self.ui.sceneView.model().setFilterRole(role) # Qt.DisplayRole
+        self.ui.lblFiltredCount.setText(
+            str(self.ui.sceneView.model().rowCount()))
     @Slot()
     def scan(self) -> None:
         '''
