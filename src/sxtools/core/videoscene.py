@@ -22,7 +22,7 @@ class Scene:
         self.path, self.ext = path, path[-3:].lower()
         self.size = getsize(path) # os.stat()
         self.performers = list()
-        self.title, self.paysite = '', None
+        self.title, self.paysite = '', ''
         self.released = None # date is not set
         self.ffprobed = False # deep scan performed
 

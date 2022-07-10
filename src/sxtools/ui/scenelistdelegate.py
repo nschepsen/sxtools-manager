@@ -1,7 +1,7 @@
 from PySide6.QtCore import QRect, QSize, Qt, QPoint
 from PySide6.QtGui import QBrush, QFont, QFontMetrics, QImage, QPainter, QPalette
 from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem, QApplication
-from sxtools.ui.scenelistmodel import SceneModel
+from sxtools.ui.scenelistmodel import SceneDataRole, SceneModel
 from sxtools.utils import human_readable
 
 
@@ -45,12 +45,12 @@ class SceneDelegate(QStyledItemDelegate):
                option.palette.brush(QPalette.Normal, QPalette.Highlight))
         # retrieve data from the model, TODO: get a scene obj
         thumbnail = index.data(Qt.DecorationRole) # get thumbnail for the scene
-        paysite = index.data(SceneModel.UserRoles.Paysite)
-        performers = index.data(SceneModel.UserRoles.Performers)
-        released = index.data(SceneModel.UserRoles.Date)
-        resolution = f'Resolution: {index.data(SceneModel.UserRoles.Resolution)}'
-        size = human_readable(index.data(SceneModel.UserRoles.Size)) # always set
-        title = index.data(SceneModel.UserRoles.Title)
+        paysite = index.data(SceneDataRole.PaysiteRole)
+        performers = index.data(SceneDataRole.PerformersRole)
+        released = index.data(SceneDataRole.DateRole)
+        resolution = f'Resolution: {index.data(SceneDataRole.ResolutionRole)}'
+        size = human_readable(index.data(SceneDataRole.SizeRole)) # always set
+        title = index.data(SceneDataRole.TitleRole)
         # style & pens & fonts & metrics
         painter.setPen(option.palette.color(QPalette.Normal, cr))
         painter.setRenderHint(QPainter.Antialiasing, True)
@@ -66,6 +66,7 @@ class SceneDelegate(QStyledItemDelegate):
         resolutionSize = painter.fontMetrics().size(QFont.MixedCase, resolution)
 
         x, y, w, h = option.rect.adjusted(5, 5, -5, -5).getRect() # layout coordinates
+
         c2ndW = max(i.width() for i in [
             perfsSize, paysiteSize, titleSize])
         c3rdW = max(i.width() for i in [

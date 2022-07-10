@@ -3,6 +3,7 @@ from subprocess import call
 from typing import Tuple
 
 from PySide6.QtCore import QModelIndex, QSortFilterProxyModel, Qt, Slot
+from PySide6.QtGui import QActionGroup
 from PySide6.QtWidgets import QFileDialog, QMainWindow, QMessageBox,QProgressDialog, QRadioButton
 
 from sxtools import __date__, __author__, __email__, __status__, __version__
@@ -10,13 +11,13 @@ from sxtools.core.manager import Manager
 from sxtools.core.rfcode import RFCode
 from sxtools.core.videoscene import Scene
 from sxtools.logging import get_basic_logger
-from sxtools.ui.scenefilter import SceneFilter
+from sxtools.ui.scenefilter import SceneSortFilter
 logger = get_basic_logger()  # see ~/.config/sxtools/sXtools.log
 # re-build .ui-files as the case may be, use pyside6-uic
 from sxtools.ui.compiled.mainwindow import Ui_MainWindow
 from sxtools.ui.decisiondialog import DecisionDialog
 from sxtools.ui.scenelistdelegate import SceneDelegate
-from sxtools.ui.scenelistmodel import SceneModel
+from sxtools.ui.scenelistmodel import SceneDataRole, SceneModel
 from sxtools.utils import bview, cache, cache_size, check_updates, fview, human_readable
 
 
@@ -29,16 +30,31 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.manager = m # load manager
         self.manager.ui, self.ui = self, Ui_MainWindow()
+        # default preference definition
+        self.prefs = {
+            'sort': {
+                'order': Qt.AscendingOrder
+            }
+        }
         self.ui.setupUi(self) # load UI
         self.setWindowTitle(f'{m.caption}')
         baseModel = SceneModel(self.manager.queue, self)
-        proxy = SceneFilter(self)
+        proxy = SceneSortFilter(self)
         proxy.setSourceModel(baseModel)
         self.ui.sceneView.setModel(proxy)
         self.ui.sceneView.setItemDelegate(SceneDelegate(self.ui.sceneView))
         self.ui.sceneView.verticalScrollBar().setSingleStep(5)
+        # crete action group [SortMode]
+        sortModes = QActionGroup(self)
+        sortModes.addAction(self.ui.actionSortByPerformers)
+        sortModes.addAction(self.ui.actionSortByTitle)
+        sortModes.addAction(self.ui.actionSortByPaysite)
+        sortModes.addAction(self.ui.actionSortBySize)
+        sortModes.addAction(self.ui.actionSortByReleaseDate)
         # connect UI slots
         self.ui.sceneView.doubleClicked.connect(self.play)
+        self.ui.leSearchField.textChanged.connect(self.onFilterTextChanged)
+        self.ui.bgFilterRoles.buttonToggled.connect(self.onFilterRoleChanged)
         # connect UI actions [FILE]
         self.ui.aOpen.triggered.connect(self.open)
         self.ui.aRelocate.triggered.connect(self.relocate)
@@ -46,6 +62,8 @@ class MainWindow(QMainWindow):
         # connect UI actions [EDIT]
         # self.ui.aSettings.triggered.connect(self.save)
         # connect UI actions [VIEW]
+        sortModes.triggered.connect(self.onSortModeChanged)
+        self.ui.actionSortOrder.triggered.connect(self.onSortOrderChanged)
         self.ui.aScan.triggered.connect(self.scan)
         self.ui.aClearCache.triggered.connect(self.clearCache)
         # connect UI actions [HELP]
@@ -58,23 +76,26 @@ class MainWindow(QMainWindow):
         '''
         '''
         # TODO: internal video player
-        call(['mpv', index.model().mapToSource(index).model().scenelist[index.row()].path])
+        baseIndex = index.model().mapToSource(index) # get base index
+        call(['mpv', baseIndex.model().scenelist[baseIndex.row()].path])
     @Slot()
     def open(self) -> None:
         '''
         Look for scene(s), analyse and load 'em into a View
         '''
-        self.manager.queue.clear() # reset the queue
+        self.ui.sceneView.model().sourceModel().clear() # reset
         src = QFileDialog.getExistingDirectory(self,
             'Open Directory',
             self.manager.src,
             QFileDialog.ShowDirsOnly)
+        if not src:
+            return
         self.manager.fetch(src) # populate queue w scenes
         n = len(self.manager.queue)
         ret = 0
         for x in self.manager.queue:
             ret += self.manager.analyse(x)
-        self.ui.sceneView.model().sync(self.manager.queue)
+        self.ui.sceneView.model().sourceModel().sync(self.manager.queue)
         self.ui.statusbar.showMessage(
             f'Imported {ret} of {n} scene(s) matched to the regex')
     @Slot()
@@ -91,6 +112,51 @@ class MainWindow(QMainWindow):
         for s in self.manager.queue:
             self.manager.relocate(s)
         # TODO: relocate selected scene(s) item-wise, otherwise all at once
+    @Slot(QActionGroup)
+    def onSortModeChanged(self, ag: QActionGroup) -> None:
+        '''
+        '''
+        self.ui.sceneView.model().setSortRole(
+            {
+                'Sort by Performers':
+                    SceneDataRole.PerformersRole,
+                'Sort by Title':
+                    SceneDataRole.TitleRole,
+                'Sort by Paysite':
+                    SceneDataRole.PaysiteRole,
+                'Sort by Size':
+                    SceneDataRole.SizeRole,
+                'Sort by Release Date':
+                    SceneDataRole.DateRole # Release Date
+            }.get(ag.text(), SceneDataRole.PerformersRole))
+        self.ui.sceneView.model().sort(0, self.ui.sceneView.model().sortOrder())
+    @Slot()
+    def onSortOrderChanged(self) -> None:
+        '''
+        '''
+        self.ui.sceneView.model().sort(
+            0, Qt.SortOrder(self.ui.actionSortOrder.isChecked()))
+    @Slot(str)
+    def onFilterTextChanged(self, string: str) -> None:
+        '''
+        '''
+        self.ui.sceneView.model().setFilterFixedString(string)
+    @Slot(QRadioButton, bool)
+    def onFilterRoleChanged(self, btn: QRadioButton, toggled: bool) -> None:
+        '''
+        '''
+        if not toggled:
+            return
+        # get SceneDataRole as FilterRole
+        role = {
+            'rbPaysites':
+                SceneDataRole.PaysiteRole,
+            'rbTitles':
+                SceneDataRole.TitleRole,
+            'rbPerformers':
+                SceneDataRole.PerformersRole,
+            }.get(btn.objectName(), SceneDataRole.PerformersRole)
+        self.ui.sceneView.model().setFilterRole(role) # Qt.DisplayRole
     @Slot()
     def scan(self) -> None:
         '''
@@ -167,13 +233,3 @@ class MainWindow(QMainWindow):
         '''
         ret = QMessageBox.question(self, 'Make your Decision', msg)
         return ret == QMessageBox.StandardButton.Yes
-
-    def changeFilterKeyColumn(self, btn: QRadioButton, checked: bool):
-        '''
-        '''
-        if checked and type(self.ui.sceneTableView.model()) == QSortFilterProxyModel:
-            self.ui.sceneTableView.model().setFilterKeyColumn({
-                'rbPerformer': 1,
-                'rbSite': 2,
-                'rbTitle': 4}.get(btn.objectName(), 1))
-        logger.debug(f'Change FilterKeyColumn to "{btn.objectName()[2:]}"')
