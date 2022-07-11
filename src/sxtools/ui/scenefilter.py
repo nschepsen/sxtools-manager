@@ -16,6 +16,17 @@ class SceneSortFilter(QSortFilterProxyModel):
             SceneDataRole.PerformersRole)
         self.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
+    def filterAcceptsRow(self, row: int, parent: QModelIndex) -> bool:
+        '''
+        '''
+        ft, fu = self.parent().ui.actionFilterTagged.isChecked(), self.parent().ui.actionFilterUntagged.isChecked()
+        index = self.sourceModel().index(row, 0, parent)
+        state = self.sourceModel().data(index, SceneDataRole.PerformersRole)
+        if (ft and state) or (fu and not state):
+            return False
+        else:
+            return super().filterAcceptsRow(row, parent)
+
     def lessThan(self, l: QModelIndex, r: QModelIndex) -> bool:
         '''
         '''

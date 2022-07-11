@@ -27,7 +27,7 @@
     <item row="0" column="0">
      <layout class="QHBoxLayout" name="loNavigation">
       <item>
-       <widget class="QLineEdit" name="leSearchField">
+       <widget class="QLineEdit" name="filterBox">
         <property name="minimumSize">
          <size>
           <width>300</width>
@@ -44,13 +44,13 @@
          <string/>
         </property>
         <property name="styleSheet">
-         <string notr="true">letter-spacing: 1px;</string>
+         <string notr="true">padding-left: 5px;</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
         </property>
         <property name="placeholderText">
-         <string>SEARCH</string>
+         <string>Filter by certain Values</string>
         </property>
         <property name="clearButtonEnabled">
          <bool>true</bool>
@@ -58,7 +58,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="lblFiltredLabel">
+       <widget class="QLabel" name="filtredLabel">
         <property name="font">
          <font>
           <bold>false</bold>
@@ -70,7 +70,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="lblFiltredCount">
+       <widget class="QLabel" name="filtredValue">
         <property name="text">
          <string>0</string>
         </property>
@@ -90,7 +90,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="QLabel" name="lblSearch">
+       <widget class="QLabel" name="filterOptionsLabel">
         <property name="text">
          <string>Search in:</string>
         </property>
@@ -105,7 +105,7 @@
          <bool>true</bool>
         </property>
         <attribute name="buttonGroup">
-         <string notr="true">bgFilterRoles</string>
+         <string notr="true">filterRoles</string>
         </attribute>
        </widget>
       </item>
@@ -115,7 +115,7 @@
          <string>Paysites</string>
         </property>
         <attribute name="buttonGroup">
-         <string notr="true">bgFilterRoles</string>
+         <string notr="true">filterRoles</string>
         </attribute>
        </widget>
       </item>
@@ -125,7 +125,7 @@
          <string>Titles</string>
         </property>
         <attribute name="buttonGroup">
-         <string notr="true">bgFilterRoles</string>
+         <string notr="true">filterRoles</string>
         </attribute>
        </widget>
       </item>
@@ -191,7 +191,7 @@
    </property>
    <widget class="QMenu" name="mFile">
     <property name="title">
-     <string>File</string>
+     <string>&amp;File</string>
     </property>
     <addaction name="aOpen"/>
     <addaction name="aRelocate"/>
@@ -201,7 +201,7 @@
    </widget>
    <widget class="QMenu" name="mEdit">
     <property name="title">
-     <string>Collections</string>
+     <string>&amp;Collections</string>
     </property>
     <addaction name="actionAdd_a_Collection"/>
     <addaction name="separator"/>
@@ -218,7 +218,7 @@
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
-     <string>View</string>
+     <string>&amp;View</string>
     </property>
     <addaction name="actionSortByPerformers"/>
     <addaction name="actionSortByTitle"/>
@@ -226,13 +226,13 @@
     <addaction name="actionSortBySize"/>
     <addaction name="actionSortByReleaseDate"/>
     <addaction name="separator"/>
-    <addaction name="actionSortOrder"/>
+    <addaction name="aSortOrder"/>
     <addaction name="separator"/>
     <addaction name="aScan"/>
     <addaction name="aClearCache"/>
     <addaction name="separator"/>
-    <addaction name="actionFilterTagged"/>
-    <addaction name="actionFilterUntagged"/>
+    <addaction name="aFilterTagged"/>
+    <addaction name="aFilterUntagged"/>
    </widget>
    <addaction name="mFile"/>
    <addaction name="mEdit"/>
@@ -335,7 +335,10 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Sort by Performers</string>
+    <string>Sort by &amp;Performers</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+1</string>
    </property>
   </action>
   <action name="actionSortByPaysite">
@@ -349,7 +352,7 @@
     <string>Sort by Paysite</string>
    </property>
   </action>
-  <action name="actionSortOrder">
+  <action name="aSortOrder">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -361,23 +364,23 @@
     <string>Reverse Sort Order</string>
    </property>
   </action>
-  <action name="actionFilterUntagged">
+  <action name="aFilterUntagged">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="checked">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="text">
-    <string>Filter out Untagged</string>
+    <string>Filter out &quot;Untagged&quot;</string>
    </property>
   </action>
-  <action name="actionFilterTagged">
+  <action name="aFilterTagged">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Filter out Tagged</string>
+    <string>Filter out &quot;Tagged&quot;</string>
    </property>
   </action>
   <action name="aScan">
@@ -404,7 +407,10 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Sort by Size</string>
+    <string>Sort by &amp;Size</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+2</string>
    </property>
   </action>
   <action name="actionSortByReleaseDate">
@@ -412,16 +418,19 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Sort by Release Date</string>
+    <string>Sort by Release &amp;Date</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+3</string>
    </property>
   </action>
  </widget>
  <tabstops>
-  <tabstop>leSearchField</tabstop>
   <tabstop>rbPerformers</tabstop>
   <tabstop>rbPaysites</tabstop>
   <tabstop>rbTitles</tabstop>
   <tabstop>sceneView</tabstop>
+  <tabstop>filterBox</tabstop>
  </tabstops>
  <resources/>
  <connections>
@@ -443,6 +452,6 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="bgFilterRoles"/>
+  <buttongroup name="filterRoles"/>
  </buttongroups>
 </ui>

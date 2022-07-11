@@ -1,9 +1,8 @@
 from os import scandir, unlink
 from subprocess import call
 from typing import Tuple
-
-from PySide6.QtCore import QModelIndex, QSortFilterProxyModel, Qt, Slot
-from PySide6.QtGui import QActionGroup
+from PySide6.QtCore import QModelIndex, Qt, Slot
+from PySide6.QtGui import QActionGroup, QAction
 from PySide6.QtWidgets import QFileDialog, QMainWindow, QMessageBox,QProgressDialog, QRadioButton
 
 from sxtools import __date__, __author__, __email__, __status__, __version__
@@ -26,53 +25,51 @@ class MainWindow(QMainWindow):
     MainWindow is the SxTools!MANAGER's main window (GUI)
     '''
     def __init__(self, m: Manager) -> None:
-
+        '''
+        '''
         super(MainWindow, self).__init__()
         self.manager = m # load manager
         self.manager.ui, self.ui = self, Ui_MainWindow()
-        # default preference definition
-        self.prefs = {
-            'sort': {
-                'order': Qt.AscendingOrder
-            }
-        }
         self.ui.setupUi(self) # load UI
         self.setWindowTitle(f'{m.caption}')
+        # create proxy model, QSortFilterProxyModel
         baseModel = SceneModel(self.manager.queue, self)
         proxy = SceneSortFilter(self)
         proxy.setSourceModel(baseModel)
         self.ui.sceneView.setModel(proxy)
         self.ui.sceneView.setItemDelegate(SceneDelegate(self.ui.sceneView))
-        #self.ui.sceneView.verticalScrollBar().setSingleStep(5)
-        # crete action group [SortMode]
+        # connect Qt6 signals
+        self.ui.sceneView.doubleClicked.connect(self.play)
+        self.ui.filterBox.textChanged.connect(
+            self.onFilterTextChanged)
+        self.ui.filterRoles.buttonToggled.connect(self.onFilterRoleChanged)
+        # connect Qt6 actions, QMenu:@File
+        self.ui.aOpen.triggered.connect(self.open)
+        self.ui.aRelocate.triggered.connect(self.relocate)
+        self.ui.aSave.triggered.connect(self.save)
+        # connect Qt6 actions, QMenu:@Collections
+        # self.ui.aSettings.triggered.connect(self.save)
+        # connect Qt6 actions, QMenu:@View
         sortModes = QActionGroup(self)
         sortModes.addAction(self.ui.actionSortByPerformers)
         sortModes.addAction(self.ui.actionSortByTitle)
         sortModes.addAction(self.ui.actionSortByPaysite)
         sortModes.addAction(self.ui.actionSortBySize)
         sortModes.addAction(self.ui.actionSortByReleaseDate)
-        # connect UI slots
-        self.ui.sceneView.doubleClicked.connect(self.play)
-        self.ui.leSearchField.textChanged.connect(self.onFilterTextChanged)
-        self.ui.bgFilterRoles.buttonToggled.connect(self.onFilterRoleChanged)
-        # connect UI actions [FILE]
-        self.ui.aOpen.triggered.connect(self.open)
-        self.ui.aRelocate.triggered.connect(self.relocate)
-        self.ui.aSave.triggered.connect(self.save)
-        # connect UI actions [EDIT]
-        # self.ui.aSettings.triggered.connect(self.save)
-        # connect UI actions [VIEW]
         sortModes.triggered.connect(self.onSortModeChanged)
-        self.ui.actionSortOrder.triggered.connect(self.onSortOrderChanged)
+        self.ui.aSortOrder.triggered.connect(self.onSortOrderChanged)
         self.ui.aScan.triggered.connect(self.scan)
         self.ui.aClearCache.triggered.connect(self.clearCache)
-        # connect UI actions [HELP]
+        self.ui.aClearCache.setText(
+            f'Clear Cache ({human_readable(cache_size())})')
+        self.ui.aFilterTagged.triggered.connect(self.onFilterTypeChanged)
+        self.ui.aFilterUntagged.triggered.connect(self.onFilterTypeChanged)
+        # connect Qt6 actions, QMenu:@Help
         self.ui.aAbout.triggered.connect(self.about)
         self.ui.aAboutQt.triggered.connect(self.aboutQt)
-        self.ui.aUpdate.triggered.connect(self.update)
-        self.ui.aClearCache.setText(f'Clear Cache [{human_readable(cache_size())}]')
+        self.ui.aUpdate.triggered.connect(self.update) # check for a new version
     @Slot(QModelIndex)
-    def play(self, index) -> None:
+    def play(self, index: QModelIndex) -> None:
         '''
         '''
         # TODO: internal video player
@@ -98,10 +95,12 @@ class MainWindow(QMainWindow):
         self.ui.sceneView.model().sourceModel().sync(self.manager.queue)
         self.ui.statusbar.showMessage(
             f'Imported {ret} of {n} scene(s) matched to the regex')
-        self.ui.lblFiltredCount.setText(str(self.ui.sceneView.model().rowCount()))
+        # update the label "Found"
+        self.ui.filtredValue.setText(str(self.ui.sceneView.model().rowCount()))
     @Slot()
     def relocate(self) -> None:
         '''
+        Move all loaded scenes to a Collection Directory
         '''
         output = QFileDialog.getExistingDirectory(self,
             'Save to Collection',
@@ -119,21 +118,22 @@ class MainWindow(QMainWindow):
         '''
         self.ui.sceneView.model().setSortRole(
             {
-                'Sort by Performers':
+                'Sort by &Performers':
                     SceneDataRole.PerformersRole,
                 'Sort by Title':
                     SceneDataRole.TitleRole,
                 'Sort by Paysite':
                     SceneDataRole.PaysiteRole,
-                'Sort by Size':
+                'Sort by &Size':
                     SceneDataRole.SizeRole,
-                'Sort by Release Date':
+                'Sort by Release &Date':
                     SceneDataRole.DateRole # Release Date
             }.get(ag.text(), SceneDataRole.PerformersRole))
         self.ui.sceneView.model().sort(0, self.ui.sceneView.model().sortOrder())
     @Slot()
     def onSortOrderChanged(self) -> None:
         '''
+        Change the Order: Qt.AscendingOrder & Qt.DescendingOrder
         '''
         self.ui.sceneView.model().sort(
             0, Qt.SortOrder(self.ui.actionSortOrder.isChecked()))
@@ -142,10 +142,13 @@ class MainWindow(QMainWindow):
         '''
         '''
         self.ui.sceneView.model().setFilterFixedString(string)
-        self.ui.lblFiltredCount.setText(str(self.ui.sceneView.model().rowCount()))
+        # update the label "Found"
+        self.ui.filtredValue.setText(
+            str(self.ui.sceneView.model().rowCount()))
     @Slot(QRadioButton, bool)
     def onFilterRoleChanged(self, btn: QRadioButton, toggled: bool) -> None:
         '''
+        Change the FilterRole: PaysiteRole, TitleRole & PerformersRole
         '''
         if not toggled:
             return
@@ -159,11 +162,13 @@ class MainWindow(QMainWindow):
                 SceneDataRole.PerformersRole,
             }.get(btn.objectName(), SceneDataRole.PerformersRole)
         self.ui.sceneView.model().setFilterRole(role) # Qt.DisplayRole
-        self.ui.lblFiltredCount.setText(
+        # update the label "Found"
+        self.ui.filtredValue.setText(
             str(self.ui.sceneView.model().rowCount()))
     @Slot()
     def scan(self) -> None:
         '''
+        Perform a scene video Scan using "ffprobe"
         '''
         scenelist = self.manager.queue # self.ui.sceneView.model().scenelist
         progress = QProgressDialog(
@@ -186,6 +191,7 @@ class MainWindow(QMainWindow):
     @Slot()
     def about(self) -> None:
         '''
+        Show an "About" MessageBox
         '''
         QMessageBox.about(self, 'SxTools!MANAGER <About>',
             f'<b>SxTools!MANAGER</b> {__version__}'
@@ -194,11 +200,13 @@ class MainWindow(QMainWindow):
     @Slot()
     def aboutQt(self) -> None:
         '''
+        Show an "About Qt6" MessageBox
         '''
         QMessageBox.aboutQt(self, 'SxTools!MANAGER <About Qt>')
     @Slot()
     def update(self) -> None:
         '''
+        Check your version of this app for update(s)
         '''
         ret = QMessageBox.information(self,
             'SxTools!MANAGER <Updates>',
@@ -206,14 +214,22 @@ class MainWindow(QMainWindow):
     @Slot()
     def clearCache(self):
         '''
-        Remove thumbnails from the Cache
+        Delete thumbnails from the Cache directory
         '''
         with scandir(cache()) as it:
             for entry in it:
                 if entry.is_file():
                     unlink(entry.path)
         self.ui.sceneView.setFocus() # TODO: force to repaint
-        self.ui.aClearCache.setText(f'Clear Cache [{human_readable(cache_size())}]')
+        self.ui.aClearCache.setText(
+            f'Clear Cache ({human_readable(cache_size())})')
+    @Slot(QAction)
+    def onFilterTypeChanged(self, action: QAction):
+        '''
+        '''
+        self.ui.sceneView.model().invalidateFilter()
+        # update the label "Found"
+        self.ui.filtredValue.setText(str(self.ui.sceneView.model().rowCount()))
 
     def save(self) -> None: self.manager.save()
 
