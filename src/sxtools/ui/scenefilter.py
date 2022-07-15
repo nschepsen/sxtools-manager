@@ -19,7 +19,7 @@ class SceneSortFilter(QSortFilterProxyModel):
     def filterAcceptsRow(self, row: int, parent: QModelIndex) -> bool:
         '''
         '''
-        ft, fu = self.parent().ui.actionFilterTagged.isChecked(), self.parent().ui.actionFilterUntagged.isChecked()
+        ft, fu = self.parent().ui.aFilterTagged.isChecked(), self.parent().ui.aFilterUntagged.isChecked()
         index = self.sourceModel().index(row, 0, parent)
         state = self.sourceModel().data(index, SceneDataRole.PerformersRole)
         if (ft and state) or (fu and not state):
