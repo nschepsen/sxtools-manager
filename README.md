@@ -7,15 +7,52 @@
 
 **S**xTools!**M**ANAGER helps you to manage a video collection according to your wishes
 
-### WHAT'S IMPLEMENTED?! ###
+### USAGE ###
 
-TBA
+* git clone https://github.com/nschepsen/sxtools-manager.git
+* cd sxtools-manager
+* [OPTIONAL] python3 -m venv .env
+* [OPTIONAL] source .env/bin/activate
+* pip install .
+* (...)
+* Profit! sxtools -h | sxtools -v --qt
 
+usage: sxtools [-h] [-v | -q] [--gui] [-n] [--input PATH] [--output PATH] [-t TOP] [-s] [--asc] [-V]
+
+```
+SxTools!MANAGER helps you to manage collections according to your wishes
+
+optional arguments:
+  -h, --help         show this help message and exit
+  -v, --verbose      verbose mode: info & debug
+  -q, --quiet        less output: warnings & criticals
+  --gui, --qt        launch the app in windowed mode
+  -n, --dry-run      run the app without taking any changes to files and the "map" library
+  --input PATH       set a path to sources
+  --output PATH      set a path to an output directory (default: "$input")
+  -t TOP, --top TOP  limit the "in-app table size" to n rows
+  -s, --scan         scan scene(s) using "ffprobe"
+  --asc              sort the output in ascending order
+  -V, --version      show program's version number and exit
+```
 ### SCREENSHOTS ###
 
-TBA
+![Version 1.2.0-beta.4](images/v1.2.0-beta.4-0.png)
+![Version 1.2.0-beta.4](images/v1.2.0-beta.4-1.png)
+![Version 1.2.0-beta.4](images/v1.2.0-beta.4-2.png)
+![Version 1.2.0-beta.4](images/v1.2.0-beta.4-3.png)
+![Version 1.2.0-beta.4](images/v1.2.0-beta.4-4.png)
 
 ## CHANGELOG ##
+
+### SxTools!MANAGER 1.2.0-beta.4 ###
+
+* Improve scene loyout (1, 2 & 3 rows) based on present data
+* Fix MimeType guessing Bug
+* Improve Thumbnail painting Performance
+* Add SceneSortFilter(QSortFilterProxyModel) Sort & Filters
+* Add additional filters: "Tagged|Untagged"
+* Add SceneDelegate(QStyledItemDelegate)::createEditor(...)
 
 ### SxTools!MANAGER 1.2.0-beta.3 ###
 
