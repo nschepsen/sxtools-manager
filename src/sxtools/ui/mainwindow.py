@@ -2,10 +2,9 @@ from os import scandir, unlink
 from subprocess import call
 from typing import Tuple
 from PySide6.QtCore import QModelIndex, Qt, Slot
-from PySide6.QtGui import QActionGroup, QAction
-from PySide6.QtWidgets import QFileDialog, QMainWindow, QMessageBox,QProgressDialog, QRadioButton
-
-from sxtools import __date__, __author__, __email__, __status__, __version__
+from PySide6.QtGui import QAction, QActionGroup
+from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QRadioButton, QStyle
+from sxtools import __author__, __date__, __email__, __status__, __version__
 from sxtools.core.manager import Manager
 from sxtools.core.rfcode import RFCode
 from sxtools.core.videoscene import Scene
@@ -24,14 +23,20 @@ class MainWindow(QMainWindow):
     '''
     MainWindow is the SxTools!MANAGER's main window (GUI)
     '''
-    def __init__(self, m: Manager) -> None:
+    def __init__(self, manager: Manager) -> None:
         '''
         '''
         super(MainWindow, self).__init__()
-        self.manager = m # load manager
+        self.manager = manager # load manager
         self.manager.ui, self.ui = self, Ui_MainWindow()
         self.ui.setupUi(self) # load UI
-        self.setWindowTitle(f'{m.caption}')
+        spawnRect = QStyle.alignedRect(
+            Qt.LeftToRight,
+            Qt.AlignCenter,
+            self.size(),
+            QApplication.primaryScreen().availableGeometry())
+        self.setGeometry(spawnRect)
+        self.setWindowTitle(f'{manager.caption}')
         # create proxy model, QSortFilterProxyModel
         baseModel = SceneModel(self.manager.queue, self)
         proxy = SceneSortFilter(self)
