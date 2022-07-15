@@ -218,6 +218,7 @@ class Ui_MainWindow(object):
 "}")
         self.sceneView.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.sceneView.setSizeAdjustPolicy(QAbstractScrollArea.AdjustIgnored)
+        self.sceneView.setEditTriggers(QAbstractItemView.EditKeyPressed)
         self.sceneView.setAlternatingRowColors(True)
         self.sceneView.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.sceneView.setSelectionBehavior(QAbstractItemView.SelectRows)

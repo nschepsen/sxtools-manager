@@ -35,7 +35,7 @@ class Scene:
         get bool state signaling a scene was already parsed
         :return: scene is valid or not
         '''
-        return self.released and self.performers and self.paysite
+        return bool(self.released and self.performers and self.paysite)
 
     def basename(self) -> str:
         '''
@@ -117,7 +117,7 @@ class Scene:
                     '-gravity', 'Center',
                     '-crop', f'{side}x{side}+0+0',
                     #'-unsharp', '0.25x0.25+8+0.065',
-                    '-resize', '57',
+                    '-resize', '49',
                     '-quality', '90', cache(self.basename())])
             self.ffprobed = True
         except (FileNotFoundError) as e:

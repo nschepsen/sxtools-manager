@@ -1,3 +1,4 @@
+from datetime import date
 from enum import IntEnum, Enum  # , auto
 
 from PySide6.QtCore import QAbstractListModel, QModelIndex, Qt
@@ -21,7 +22,7 @@ from sxtools.utils import cache  # check thumbnails existence
 
 SceneDataRole = IntEnum(
     'SceneDataRole',
-    'PerformersRole PaysiteRole TitleRole DateRole SizeRole ResolutionRole PathRole MimeTypeRole',
+    'PerformersRole PaysiteRole TitleRole DateRole SizeRole SceneRole',
     start=Qt.UserRole)
 
 class SceneModel(QAbstractListModel):
@@ -58,28 +59,49 @@ class SceneModel(QAbstractListModel):
         '''
         retrieve data according to its role
         '''
-        s = self.scenelist[index.row()]
-        # switch on current role
+        s = self.scenelist[index.row()] # get the current item
         if role == SceneDataRole.PerformersRole:
             return s.perfs_as_string()
         elif role == SceneDataRole.PaysiteRole:
             return s.paysite
         elif role == SceneDataRole.TitleRole:
-            return s.name() # or s.title
+            return s.title # or s.name()
         elif role == SceneDataRole.DateRole:
             return f'{s.released or "not defined"}'
         elif role == SceneDataRole.SizeRole:
             return s.size # not humanreadable yet
-        elif role == SceneDataRole.ResolutionRole:
-            return s.resolution()
-        elif role == SceneDataRole.PathRole:
-            return s.path
-        elif role == SceneDataRole.MimeTypeRole:
-            return s.mimetype()
+        elif role == SceneDataRole.SceneRole:
+            return s # return the reference to the object
         elif role == Qt.DecorationRole:
             thumbnail = cache(s.basename())
             if thumbnail:
                 return QImage(thumbnail)
             else:
-                return QIcon.fromTheme(s.mimetype()).pixmap(47, 47)
+                return QIcon.fromTheme(s.mimetype()).pixmap(64, 64)
         return None # return QVariant() -> Emergency Exit
+
+    def setData(self, index: QModelIndex, value, role: int) -> bool:
+        '''
+        '''
+        s = self.scenelist[index.row()] # get the current item
+        if role == SceneDataRole.PerformersRole:
+            if value and type(value) == list and set(value) != set(s.performers):
+                s.performers = value
+                return True
+        elif role == SceneDataRole.DateRole:
+            if value and type(value) == date and value != s.released:
+                s.released = value
+                return True
+        elif role == SceneDataRole.TitleRole:
+            if value != s.title:
+                s.title = value
+                return True
+        elif role == SceneDataRole.PaysiteRole:
+            if value and value != s.paysite:
+                s.paysite = value # set modified paysite as string
+                return True
+        else:
+            print(f'Warning: An unhandled role "{role}" was caught')
+        return False
+
+    def flags(self, index: QModelIndex) -> Qt.ItemFlags: return super().flags(index) | Qt.ItemIsEditable
