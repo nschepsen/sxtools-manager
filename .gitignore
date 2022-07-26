@@ -4,6 +4,8 @@ sxtools.map.json
 .vscode
 # Virtual Environment #
 .env
+# PyTest
+.pytest_cache/
 # Byte-Compiled #
 __pycache__/
 # Distribution & Packaging #

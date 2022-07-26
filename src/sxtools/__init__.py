@@ -2,9 +2,9 @@ from .logging import init_logging_config
 
 __project__ = 'SxTools!MANAGER'
 __author__ = 'nschepsen'
-__status__ = 'Development Status :: 4 - Beta'
-__version__ = '1.2.0-beta.4'
-__date__ = 'June 30th, 2022'
+__status__ = 'Development Status :: 5 - Stable'
+__version__ = '1.2.0'
+__date__ = 'July 24th, 2022'
 __email__ = 'schepsen@web.de' # nikolaj@schepsen.eu
 __repository__ = 'sxtools-manager' # github
 

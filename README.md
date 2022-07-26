@@ -45,47 +45,51 @@ optional arguments:
 
 ## CHANGELOG ##
 
+### SxTools!MANAGER 1.2.0 ###
+
+* fix typo(s) & release
+
 ### SxTools!MANAGER 1.2.0-beta.4 ###
 
-* Improve scene loyout (1, 2 & 3 rows) based on present data
-* Fix MimeType guessing Bug
-* Improve Thumbnail painting Performance
-* Add SceneSortFilter(QSortFilterProxyModel) Sort & Filters
-* Add additional filters: "Tagged|Untagged"
-* Add SceneDelegate(QStyledItemDelegate)::createEditor(...)
+* improve scene layout (1, 2 & 3 rows) based on existing data
+* fix mimetype guessing bug
+* improve thumbnail painting performance
+* add SceneSortFilter(QSortFilterProxyModel)
+* add additional filters: `Tagged` | `Untagged`
+* add SceneDelegate(QStyledItemDelegate)::`createEditor()`
 
 ### SxTools!MANAGER 1.2.0-beta.3 ###
 
-* Add Qt6-based UI (PySide6) Prototype
-* Add Thumbnails for Scene(s), see "Scan Perform" action
-* Add cache() for thumbnails and other temp files
-* Fix Typos
-* Update Performer & Paysite DB to the latest version
+* add Qt6-based UI (`PySide6`) prototype
+* add a method to create thumbnails, use `scan perform` action
+* add `cache()` to keep scene's thumbnails in memory
+* fix typo(s)
+* update performer & paysite DB to the latest version
 
 ### SxTools!MANAGER 1.2.0-beta.2 ###
 
-* Add "CLI"-client console (commands: :v, :q, :s, :f[ path], :a, :cl)
-* Add a better date parser, part of self.analyse(s: Scene)
-* Add a duplicate detection method; keep, remove or skip
-* Fix #1: 1-Token-Name vs. Unknown Performer's name starting with the same token
-* Fix wiping sitemap by --dry-run & changes
-* Implement the sortmap() to keep the DB sorted
-* Rewrite the ffprobe part of Scene.__init__() as an own method for performance and reuse reasons
+* add `CLI`-part console commands (:v, :q, :s, :f[ path], :a, :cl)
+* add a better date parser
+* add a duplicate detection method (options: `keep`, `remove` or `skip`)
+* fix bug #1: 1-token-name vs. unknown performer's name starting with the same token
+* fix wiping sitemap by `--dry-run` & made changes
+* add `sortmap()` to keep the DB sorted
+* relocate the `ffprobe`-part into its own method for performance and reuse purpose
 
 ### SxTools!MANAGER 1.2.0-beta.1 ###
 
-* Add 'ffprobe' support to read out scene's metadata
-* Add a logger ('~/sxtools/sXtools.log') for a better debugging experience
-* Convert the app to a pip package, e.g. 'pip install sxtools'
-* Rewrite the "CLI"-client and improve its performance
-* Split the app in Core, CLI & GUI (using Qt6) modules
+* add `ffprobe` support to read out scene's metadata
+* add a logger for a better debugging experience, see `~/sxtools/sxtools.log`
+* pack the app as a `pip package`
+* rewrite the `CLI`-part and improve its performance
+* split the app in `Core`, `CLI` & `GUI` (using Qt6) modules
 
-### SxTools!MANAGER 1.0.1, updated @ 2021-04-28 ###
+### SxTools!MANAGER 1.0.1 ###
 
-* Add Support for different Scene Releases
-* Fix Typo
-* Update Performer & Publisher DB to the latest version
+* add support for different scene releases
+* fix typo(s)
+* update performer & publisher DB to the latest version
 
-### SxTools!MANAGER 1.0.0, updated @ 2021-04-21 ###
+### SxTools!MANAGER 1.0.0 ###
 
-* Initial Release
+* initial release
