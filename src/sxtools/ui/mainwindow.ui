@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>927</width>
-    <height>517</height>
+    <width>1103</width>
+    <height>649</height>
    </rect>
   </property>
   <property name="font">
@@ -31,7 +31,7 @@
         <property name="minimumSize">
          <size>
           <width>300</width>
-          <height>30</height>
+          <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
@@ -44,13 +44,13 @@
          <string/>
         </property>
         <property name="styleSheet">
-         <string notr="true">padding-left: 5px;</string>
+         <string notr="true">padding: 5px;</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
         </property>
         <property name="placeholderText">
-         <string>Filter by certain Values</string>
+         <string>Filter scenes by a fixed string</string>
         </property>
         <property name="clearButtonEnabled">
          <bool>true</bool>
@@ -188,7 +188,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>927</width>
+     <width>1103</width>
      <height>19</height>
     </rect>
    </property>
@@ -216,6 +216,7 @@
     </property>
     <addaction name="aAbout"/>
     <addaction name="aAboutQt"/>
+    <addaction name="aEditSiteMap"/>
     <addaction name="separator"/>
     <addaction name="aUpdate"/>
    </widget>
@@ -234,8 +235,8 @@
     <addaction name="aScan"/>
     <addaction name="aClearCache"/>
     <addaction name="separator"/>
-    <addaction name="aFilterTagged"/>
-    <addaction name="aFilterUntagged"/>
+    <addaction name="aFilterModeT"/>
+    <addaction name="aFilterModeU"/>
    </widget>
    <addaction name="mFile"/>
    <addaction name="mEdit"/>
@@ -269,7 +270,7 @@
   </action>
   <action name="aAbout">
    <property name="icon">
-    <iconset theme="help-about">
+    <iconset>
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
@@ -289,7 +290,7 @@
   </action>
   <action name="aUpdate">
    <property name="icon">
-    <iconset theme="view-refresh">
+    <iconset>
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
@@ -367,7 +368,7 @@
     <string>Reverse Sort Order</string>
    </property>
   </action>
-  <action name="aFilterUntagged">
+  <action name="aFilterModeU">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -378,7 +379,7 @@
     <string>Filter out &quot;Untagged&quot;</string>
    </property>
   </action>
-  <action name="aFilterTagged">
+  <action name="aFilterModeT">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -427,13 +428,25 @@
     <string>Ctrl+3</string>
    </property>
   </action>
+  <action name="aEditSiteMap">
+   <property name="icon">
+    <iconset theme="text-x-script">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Configure Site Mapping</string>
+   </property>
+   <property name="shortcut">
+    <string>F8</string>
+   </property>
+  </action>
  </widget>
  <tabstops>
+  <tabstop>sceneView</tabstop>
+  <tabstop>filterBox</tabstop>
   <tabstop>rbPerformers</tabstop>
   <tabstop>rbPaysites</tabstop>
   <tabstop>rbTitles</tabstop>
-  <tabstop>sceneView</tabstop>
-  <tabstop>filterBox</tabstop>
  </tabstops>
  <resources/>
  <connections>

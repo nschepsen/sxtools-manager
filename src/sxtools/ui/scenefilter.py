@@ -1,5 +1,4 @@
 from PySide6.QtCore import QModelIndex, QSortFilterProxyModel, Qt
-
 from sxtools.ui.scenelistmodel import SceneDataRole
 
 
@@ -16,13 +15,22 @@ class SceneSortFilter(QSortFilterProxyModel):
             SceneDataRole.PerformersRole)
         self.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
+    def invalidateFilter(self) -> None:
+        '''
+        '''
+        super().invalidateFilter()
+        # update the label "Found"
+        self.parent().ui.filtredValue.setText(str(self.rowCount()))
+
     def filterAcceptsRow(self, row: int, parent: QModelIndex) -> bool:
         '''
         '''
-        ft, fu = self.parent().ui.aFilterTagged.isChecked(), self.parent().ui.aFilterUntagged.isChecked()
-        index = self.sourceModel().index(row, 0, parent)
-        state = self.sourceModel().data(index, SceneDataRole.PerformersRole)
-        if (ft and state) or (fu and not state):
+        ft = self.parent().ui.aFilterModeT.isChecked()
+        fu = self.parent().ui.aFilterModeU.isChecked()
+        model = self.sourceModel()
+        idx = model.index(row, 0, parent)
+        tagged = model.data(idx, SceneDataRole.SceneRole).is_valid()
+        if (ft and tagged) or (fu and not tagged):
             return False
         else:
             return super().filterAcceptsRow(row, parent)

@@ -1,23 +1,23 @@
 from argparse import Namespace
-from hashlib import md5, shake_128  # used for sitemap.json hashing to detect changes
+from hashlib import md5  # used for sitemap.json hashing to detect changes
 from os import listdir, makedirs, sep
 from os.path import basename, dirname, exists, getsize, isdir, join, realpath
-from re import search, split  #, sub
+from re import search, split  # , sub
 from shutil import move
-try:
-    from rapidjson import dump, dumps, load
-except ImportError:
-    from json import dump, dumps, load
+from rapidjson import dump, dumps, load
 from sxtools import __date__, __project__, __version__
 from sxtools.core.rfcode import RFCode  # FIXME: any WAs maybe?!
 from sxtools.core.videoscene import Scene
-from sxtools.logging import REGEX, get_basic_logger
-logger = get_basic_logger()  # sXtools.log
-from sxtools.utils import bview, cache, fview, human_readable, sortmap, strtdate  # back-&frontend repr
+from sxtools.logging import PARSE, REGEX, get_basic_logger
+from sxtools.utils import bview, cache, fview, human_readable, sortmap, strtdate, unify
 
-'''
-SxTools!MANAGER helps you to manage collections according to your wishes
-'''
+scheme = list([
+
+    r'^d="(?P<date>.*)" p="(?P<performers>.*)" s="(?P<site>.*)" t="(?P<title>.*)"', # SEMIPARSED
+    r'(?P<site>\w+)\.(?P<date>\d\d(\.\d\d){2})\.(?P<tail>[\w\.\-]+)', # SCENE
+    r'^\((?P<date>[\d\-]+)\)\s(?P<performers>[\w\.\s]+((,\s[\w\s]+)*(\s&\s[\s\w]+))?),\s(?P<site>[!&\-\w\'’\s().]+)(,\s(?P<title>.*))*']) # LIBRARY
+
+logger = get_basic_logger()
 
 # accepted video formats
 
@@ -32,11 +32,6 @@ __VIDEO_EXT__ = (
     '.wmv')
 __MAGIC_NUM__ = 5
 
-# FIXME: regex rules need a rework
-
-__RE_SCN_ID__ = r'(?P<site>\w+)\.(?P<date>\d\d(\.\d\d){2})\.(?P<tail>[\w\.\-]+)'
-__RE_LIB_ID__ = r'^\((?P<date>[\d\-]+)\)\s(?P<performers>[\w\.\s]+((,\s[\w\s]+)*(\s&\s[\s\w]+))?),\s(?P<site>[!&\-\w\'’\s().]+)(,\s(?P<title>.*))*'
-
 
 class Manager:
 
@@ -44,25 +39,59 @@ class Manager:
 
         self.src = args.input
         self.out = args.output
-        self.top = args.top # used by CLI only
+        self.top = args.top # limits the output to default: 30
         self.is_analyse_req = args.scan
         self.dry = args.dryrun
         self.asc = args.asc
         self.caption = f'{__project__} v{__version__}'
-        self.publishers = {}
-        self.scenes, self.queue = list(), list()
+        self.queue = list() # stores scenes
+        self.sitemap = {}
         self.app = dirname(dirname(realpath(__file__)))
         logger.info(f'{self.caption}')
         if args.dryrun:
             logger.info(f'Mode "DRY_RUN" activated')
         with open(join(self.app, 'sxtools.map.json'), 'r') as f:
-            self.sitemap = load(f)
-            self.build_sitemap() # self.sitemap
-        self.hash = md5(dumps(self.sitemap, ensure_ascii=False).encode('utf8')).hexdigest()
+            self.cfg = load(f)
+            self.build_sitemap() # populate sitemap w known sites
+        self.hash = self.footprint()
+        self.paysites = {} # empty at start TODO: implement Stats
         self.performers = {
-            x: 0 for x in self.sitemap['performers']
+            x: 0 for x in self.cfg['performers']
             }
-        logger.info(f'Loaded: {len(self.performers)} female performer(s)')
+        logger.info(
+            f'The DB contains {len(self.performers)} performer(s)')
+
+    def footprint(self) -> str:
+        '''
+        calculate a hash value for the current config's state
+        '''
+        return md5(dumps(self.cfg, ensure_ascii=False).encode('utf8')).hexdigest()
+
+    def save(self) -> None:
+        '''
+        store "config" into a file sorting by keys and then by values
+        '''
+        self.cfg['performers'] = [*self.performers]
+        sortmap(self.cfg)
+        # count performers in current scenes
+        performers = sum(
+            v > 0 for v in self.performers.values())
+        # check a local copy of config for changes
+        if self.hash != self.footprint():
+            if not self.dry:
+                with open(join(self.app, 'sxtools.map.json'), 'w') as f:
+                    dump(self.cfg, f)
+                logger.info('Configs saved successfully')
+        logger.info(
+            f'Live Stats: {performers} actors perform in {len(self.queue)} scenes')
+
+    def reset(self) -> None:
+        '''
+        nullify the manager's live statistics
+        '''
+        for k, v in self.performers.items():
+            self.performers[k] = 0
+        if self.queue: self.queue.clear() # empty the queue
 
     def add_source(self, source: str) -> None:
         '''
@@ -82,47 +111,28 @@ class Manager:
         unify = lambda s: s and ''.join([x for x in s if x.isalnum()]).lower()
 
         for network, sites in [
-            *self.sitemap['networks'].items(), (None, self.sitemap['sites'])]:
+            *self.cfg['networks'].items(), (None, self.cfg['sites'])]:
             for site in sites:
                 nid, sid = unify(network), unify(site)
             # choose your preferred publisher format:
                 # network (site) vs. site
                 p = f'{network} ({site})' if network and nid != sid else site
-                if not network and self.publishers.get(sid):
+                if not network and self.sitemap.get(sid):
                     logger.warning(f'"{site}" is already listed')
-                self.publishers[sid] = p
+                self.sitemap[sid] = p
                 if network:
-                    self.publishers[f'{nid}{sid}'] = p
+                    self.sitemap[f'{nid}{sid}'] = p
         # match acronyms to the existing keys
-        for acronym, v in self.sitemap.get('acronyms', {}).items():
+        for acronym, v in self.cfg.get('acronyms', {}).items():
             if acronym == v: # pqoc
                 logger.warning(f'Remove the acronym "{acronym}"')
-            publisher = self.publishers.get(unify(v))
+            publisher = self.sitemap.get(unify(v))
             if publisher:
-                self.publishers[acronym] = publisher
+                self.sitemap[acronym] = publisher
             else:
                 logger.warning(f'The acronym "{acronym}" is undefined')
-        logger.info(f'Loaded: {len(set(self.publishers.values()))} known site(s)')
-        logger.warning(f'{len(self.sitemap["undefined"])} undefined key(s) detected')
-
-    def save(self) -> None:
-        '''
-        dump sitemap to a file sorting by keys and then by values in ascending order
-        '''
-        self.sitemap['performers'] = [*self.performers]
-        sortmap(self.sitemap)
-        # count performers participated in fetched scenes
-        performers = sum(
-            v > 0 for v in self.performers.values())
-        # examine sitenmap for changes
-        if self.hash != md5(dumps(self.sitemap, ensure_ascii=False, sort_keys=True).encode('utf8')).hexdigest():
-            if not self.dry:
-                with open(join(self.app, 'sxtools.map.json'), 'w') as f:
-                    dump(self.sitemap, f)
-                logger.info('Sitemap changes were successfully saved')
-            else:
-                logger.info('Saving sitemap in DRY_MODE takes no changes')
-        logger.info(f'Statistics: {performers} actors perform in {len(self.queue)} scenes')
+        logger.info(f'Loaded: {len(set(self.sitemap.values()))} known site(s)')
+        logger.warning(f'{len(self.cfg["undefined"])} undefined key(s) detected')
 
     def fetch(self, directory: str) -> None:
         '''
@@ -143,32 +153,35 @@ class Manager:
 
     def analyse(self, s: Scene) -> bool:
         '''
-        tokenize the scene name and parse date, performers, publisher and title, if possible
+        parse date, performers, paysite and title & track statistics
         '''
-        regexrules = [__RE_SCN_ID__, __RE_LIB_ID__] # by adding new rules, verify the code
-        m = next(filter(bool, map(search, regexrules, [str(s)] * len(regexrules))), None)
+        m = next(filter(bool, map(search, scheme, [str(s)] * len(scheme))), None)
         if m is None:
-            logger.log(REGEX, f'The scene doesn\'t match to the regex: "{s}"')
+            s.set_title(str(s))
+            logger.log(
+                REGEX,
+                f'The scene doesn\'t match the regex: "{s}"')
             return False
-        s.released = strtdate(m.group('date')) # save date
-        sid = ''.join(x for x in m.group('site') if x.isalnum()).lower()
-        publisher = self.publishers.get(sid)
-        if not (publisher or sid in self.sitemap['undefined']):
-            self.sitemap['undefined'].append(sid)
-            logger.info(f'A new publisher site "{sid}" added')
-        s.paysite = publisher or sid # save scene publisher into the structure
+        s.released = strtdate(m.group('date')) # save parsed date
+        sid = ''.join(x for x in m.group('site') if x.isalnum()).lower() # non-unique
+        paysite = self.sitemap.get(sid)
+        if not (paysite or sid in self.cfg['undefined']):
+            self.cfg['undefined'].append(sid)
+            logger.info(f'A new paysite "{sid}" added to the queue')
+        else:
+            pid = unify(paysite) # generate unique identifier
+            self.paysites[pid] = self.paysites.get(pid, 0) + 1
+        s.paysite = paysite or sid # save paysite into the structure
         try:
-            s.set_title(m.group('title')) # See the setTitle() implementation!
-            # opt: sub('\'[A-Z]', lambda x: x.group(0).lower(), m.group('title'))
-            performers = [bview(x) for x in split(',|&', m.group('performers'))]
+            s.set_title(m.group('title')) # function modifies the string
+            performers = [bview(x) for x in split(',|&', m.group('performers')) if x]
         except IndexError as e:
-            performers = list() # temp bviewed performer list
-            tail = m.group('tail').lower()
-            while True: # FIXME: implement a better logic for "performer search"
-                performer = '' # init&reset local variable
+            performers, tail = list(), m.group('tail').lower() # reset
+            while True: # FIXME: implement a better logic aka perf parser
+                performer = '' # reset local variables
                 # look-ahead window range, up to 3 tokens
                 lookahead = range(min(tail.count('.') + 1, 3), 0, -1)
-                # look for already known performers
+                # does the perf DB contain one of these tokens?
                 for key in ['.'.join(tail.split('.')[:x]) for x in lookahead]:
                     if key in self.performers:
                         question = f'Does "{key.title()}" perform in "{tail}"?'
@@ -196,48 +209,45 @@ class Manager:
         # collection main statistics, update the database, count performers & publisher
         for x in performers:
             self.performers[x] = self.performers.get(x, 0) + 1
-        s.performers = sorted(fview(x) for x in performers); return True # save performers
+        s.performers = sorted(fview(x) for x in performers)
+        logger.log(PARSE, s.viewname())
+        return True # The analyse is complete & The scene should be at least semiparsed now
 
     def relocate(self, s: Scene) -> None:
         '''
-        move a scene file into the library directory, handle duplicates
+        move a scene "s", eliminate duplicates & remove empty folders
         '''
         if self.dry:
-            logger.debug('Won\'t relocate the scene, DRY_MODE is on!')
+            logger.debug('Move-Op isn\'t possible due to DRY_MODE')
             return
-        if not s.released or not s.performers or not s.paysite: # use not s.in_valid() instead
-            # # there's no metadata, so it couldn't be renamed
+        if not s.released or not s.performers or not s.paysite:
             # if DONTMOVEFLAG:
-            #     logger.debug(
-            #         f'Won\'t move "{basename(s.path)}"')
-            target = f'{sep}'.join(
-                [sep.join(self.out.split(sep)[:-1]), 'unsorted', s.basename()])
+            #     return
+            suffix = 'Unsorted' # folder for unsorted scenes
+            fn = 'd="{}" p="{}" s="{}" t="{}".{}'.format(
+                s.released or '', s.perfs_as_string(), s.paysite, s.title, s.ext)
         else:
-            n, famous = max([(self.performers[bview(i)], i) for i in s.performers])
-            # try to move the scene into the target library
+            n, famous = max(
+                (self.performers.get(bview(i), 1), i) for i in s.performers)
+            # define a scene's and lib subfolder's name
             suffix = join(famous[0], famous)
+            fn = '({}) {}, {}{}.{}'.format(
+                s.released or '',
+                s.perfs_as_string(), s.paysite, f', {s.title}' if s.title else '', s.ext)
             if n < __MAGIC_NUM__:
                 suffix = 'Miscellany'
-            # build a new video scene name according to the library format
-            filename = '({}) {}, {}{}.{}'.format(
-                s.released,
-                s.perfs_as_string(),
-                s.paysite,
-                f', {s.title}' if s.title else '', s.ext)
-            target = join(join(self.out, suffix), filename)
-        # check if the scene exists
+        target = f'{sep}'.join([self.out, suffix, fn]) # full fn w path
+        # check if there is a file w the same path;  no need to operate on it
         if s.path != target:
-            logger.debug(f'The new scene location is goin\' to be "{target}"')
-            isMoveable = True
+            isMoveable = True # each scene is moveable by default
+            logger.debug(f'Trying to save "{fn}" in "{suffix}"')
             if exists(target):
-                logger.warning(
-                    f'Oops! A copy already exists: "{basename(target)}"')
-                s1, s2 = human_readable(getsize(target)), human_readable(s.size)
+                logger.warning('Oops! A copy already exists')
+                old, new = human_readable(getsize(target)), human_readable(s.size)
                 isMoveable = self.ui.question(
-                    f'Do you want to replace it "{s1}" with yours copy "{s2}"? ')
+                    f'Do you want to replace "{old}" with "{new}"?')
             if isMoveable:
-                makedirs(
-                    dirname(target), exist_ok=True)
+                makedirs(dirname(target), exist_ok = True) # be sure, the folder exists
                 thumbnail = cache(s.basename())
                 if s.basename() != basename(target) and thumbnail:
                     move(thumbnail, cache(basename(target), True))

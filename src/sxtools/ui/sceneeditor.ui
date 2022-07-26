@@ -160,6 +160,9 @@
         <property name="text">
          <string/>
         </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+        </property>
        </widget>
       </item>
      </layout>
@@ -233,7 +236,7 @@
        </widget>
       </item>
       <item row="0" column="2">
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="btnParseDate">
         <property name="minimumSize">
          <size>
           <width>0</width>
@@ -302,21 +305,25 @@
         <property name="showGroupSeparator" stdset="0">
          <bool>false</bool>
         </property>
-        <property name="dateTime">
-         <datetime>
-          <hour>0</hour>
-          <minute>0</minute>
-          <second>0</second>
-          <year>2000</year>
-          <month>1</month>
-          <day>1</day>
-         </datetime>
+        <property name="minimumDate">
+         <date>
+          <year>1752</year>
+          <month>9</month>
+          <day>14</day>
+         </date>
         </property>
         <property name="displayFormat">
          <string>yyyy-MM-dd</string>
         </property>
         <property name="calendarPopup">
          <bool>false</bool>
+        </property>
+        <property name="date">
+         <date>
+          <year>1752</year>
+          <month>9</month>
+          <day>14</day>
+         </date>
         </property>
        </widget>
       </item>
@@ -358,11 +365,16 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>performerList</tabstop>
-  <tabstop>btnResetDate</tabstop>
-  <tabstop>iReleaseDate</tabstop>
   <tabstop>iPaysite</tabstop>
   <tabstop>iTitle</tabstop>
+  <tabstop>iPerformer</tabstop>
+  <tabstop>btnAdd</tabstop>
+  <tabstop>iReleaseDate</tabstop>
+  <tabstop>btnParseDate</tabstop>
+  <tabstop>btnResetDate</tabstop>
+  <tabstop>performerList</tabstop>
+  <tabstop>btnDelete</tabstop>
+  <tabstop>btnClear</tabstop>
  </tabstops>
  <resources/>
  <connections>

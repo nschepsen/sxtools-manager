@@ -1,19 +1,16 @@
 from argparse import ArgumentTypeError
-from datetime import date, datetime as dt
+from datetime import date
+from datetime import datetime as dt
 from hashlib import md5
 from operator import truediv
-from os import makedirs, scandir, unlink
+from os import makedirs, scandir
 from os.path import abspath, exists, expanduser, join
 from typing import Union
 from urllib import error, request
-try:
-    from rapidjson import loads
-except ImportError:
-    from json import loads
+from rapidjson import loads
 from sxtools.logging import get_basic_logger
 logger = get_basic_logger() # sXtools.log
-from sxtools import __version__, __author__ as owner, __repository__ as repo
-
+from sxtools import __author__ as owner, __repository__ as repo, __version__
 
 
 def apt_path_exists(path: str) -> str:
@@ -26,19 +23,34 @@ def apt_path_exists(path: str) -> str:
     else:
         raise ArgumentTypeError('No such file or directory')
 
-def fview(s: str, sep: str='.') -> str: return s.replace(sep, ' ').title()
-def bview(s: str, sep: str='.') -> str: return s.strip().replace(' ', sep).lower()
+def fview(s: str, sep: str='.') -> str: return ' '.join(s.split()).replace(sep, ' ').title() # s.replace(sep, ' ').title()
+def bview(s: str, sep: str='.') -> str: return ' '.join(s.split()).replace(' ', sep).lower() # return s.strip().replace(' ', sep).lower()
+
+def unify(s: Union[str, None]) -> str:
+    '''
+    '''
+    return s and ''.join(x for x in s if x.isalnum()).lower()
 
 def strtdate(s: str) -> date:
     '''
     Convert a string to DATETIME and return its date part
     :return: DATE as "datetime.date" class
     '''
-    for fmt in ('%Y-%m-%d', '%y.%m.%d', '%d-%m-%Y', '%m.%d.%y'):
+    formats = set([
+        '%Y-%m-%d',
+        '%y.%m.%d',
+        '%d-%m-%Y',
+        '%m.%d.%y',
+        '%Y.%m.%d',
+        '%y-%m-%d',
+        '%d.%m.%Y',
+        '%m-%d-%y'])
+    for fmt in formats:
         try:
             return dt.strptime(s, fmt).date()
         except ValueError:
             pass
+    return None
     raise ValueError(f'No valid date format found in {s}')
 
 def sortmap(d: dict) -> None:

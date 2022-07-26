@@ -1,14 +1,14 @@
 from PySide6.QtCore import QAbstractItemModel, QModelIndex, QPoint, QRect, QSize, Qt
-from PySide6.QtGui import QBrush, QFont, QFontMetrics, QImage, QPainter, QPalette, QPixmap
+from PySide6.QtGui import QBrush, QColor, QFont, QFontMetrics, QImage, QPainter, QPalette
 from PySide6.QtWidgets import QApplication, QStyle, QStyledItemDelegate, QStyleOptionViewItem, QWidget
 from sxtools.ui.sceneeditor import SceneEditor
 from sxtools.ui.scenelistmodel import SceneDataRole
-from sxtools.utils import fview, human_readable
+from sxtools.utils import human_readable  # fmt size to a human readable string
 
 
 class SceneDelegate(QStyledItemDelegate):
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent = None) -> None:
         '''
         '''
         super(SceneDelegate, self).__init__(parent) # init parent methods
@@ -20,12 +20,13 @@ class SceneDelegate(QStyledItemDelegate):
         self.iconSize = 49 # height of the info text block
 
     @staticmethod
-    def circledIcon(icon: QImage, size: int = 48) -> QImage:
+    def circledIcon(image: QImage, dimention: int = 49) -> QImage:
         '''
+        create a circled thumbnail as an item decoration
         '''
-        side = min(icon.width(), icon.height())
-        squaded = icon.copy(
-            icon.width() - side >> 1, icon.height() - side >> 1, side, side)
+        side = min(image.width(), image.height())
+        squaded = image.copy(
+            image.width() - side >> 1, image.height() - side >> 1, side, side)
         circled = QImage(side, side, QImage.Format_ARGB32)
         circled.fill(Qt.transparent)
         painter = QPainter(circled)
@@ -35,57 +36,70 @@ class SceneDelegate(QStyledItemDelegate):
         # painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
         painter.drawEllipse(0, 0, side, side)
         painter.end()
-        return circled.scaled(size, size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        return circled.scaled(dimention, dimention, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
     def createEditor(self, parent, option, index) -> QWidget:
         '''
         '''
-        manager = self.parent().parent().parent().manager
-        perfs = list(
-            fview(x) for x in manager.performers.keys())
-        publishers = set(manager.publishers.values())
-        return SceneEditor(perfs, publishers) # ret QWidget<Editor>
+        return SceneEditor(self.parent().parent().parent().manager) # ret QWidget<Editor>
 
     def updateEditorGeometry(self, editor, option, index):
         '''
+        adjust the position of a window on the screen
         '''
         spawnRect = QStyle.alignedRect(
             Qt.LeftToRight,
             Qt.AlignCenter,
             editor.size(),
-            QApplication.primaryScreen().availableGeometry())
-        editor.setGeometry(spawnRect)
+            self.parent().parent().parent().geometry())
+        editor.setGeometry(spawnRect) # apply the new geometry
 
     def setEditorData(self, editor: QWidget, index: QModelIndex) -> None:
         '''
         '''
-        s = index.data(SceneDataRole.SceneRole) # get scene
-        if s.is_valid():
-            editor.ui.iReleaseDate.setDate(s.released)
-            editor.ui.iPaysite.setText(s.paysite) # always set
-            editor.ui.iTitle.setText(s.title) # could be empty
-            editor.ui.performerList.addItems(s.performers)
-        editor.ui.lblBaseName.setText(s.basename()) # basename
+        s = index.data(SceneDataRole.SceneRole) # get scene object
+        editor.ui.iReleaseDate.setDate(
+            index.data(SceneDataRole.DateRole))
+        editor.ui.iPaysite.setText(
+            index.data(SceneDataRole.PaysiteRole)) # fmt'd paysite
+        editor.ui.iTitle.setText(index.data(SceneDataRole.TitleRole))
+        editor.ui.performerList.addItems(s.performers)
+        editor.ui.lblBaseName.setText(s.sanitize()) # sanitized due to date parsing issues
 
     def setModelData(self, editor: QWidget, model: QAbstractItemModel, index: QModelIndex) -> None:
         '''
-        TODO: this method needs a FIX asap! Problem: setData -> Doublechecking
         '''
-        s = index.data(SceneDataRole.SceneRole) # get scene
-        date = editor.ui.iReleaseDate.date().toPython()
-        if s.released != date:
-            model.setData(index, date, SceneDataRole.DateRole)
-        paysite = editor.ui.iPaysite.text().strip()
-        if paysite and s.paysite != paysite:
-            model.setData(
-                index, paysite, SceneDataRole.PaysiteRole)
-        title = editor.ui.iTitle.text().strip()
-        if s.title != title:
-            model.setData(index, title, SceneDataRole.TitleRole)
-        pl = editor.ui.performerList
-        perfs = [x.text() for x in pl.findItems('*', Qt.MatchWildcard)]
-        if perfs and set(perfs) != set(s.performers):
-            model.setData(index, [x.strip().title() for x in perfs], SceneDataRole.PerformersRole)
+        s = model.data(index, SceneDataRole.SceneRole)
+        flags = 0x0 # unset flags
+        # Performers .. 0x1
+        # Paysite ..... 0x2
+        # Title ....... 0x4
+        # ReleaseDate . 0x8
+        vOld, nOld = s.is_valid(), s.viewname()
+        hv = model.sourceModel().hashvalues # prevent duplicates
+        flags |= model.setData(
+            index,
+            editor.ui.iReleaseDate.date().toPython(),
+            SceneDataRole.DateRole) << 3
+        flags |= model.setData(
+            index,
+            editor.ui.iPaysite.text(),
+            SceneDataRole.PaysiteRole) << 1
+        flags |= model.setData(
+            index,
+            editor.ui.iTitle.text(), SceneDataRole.TitleRole) << 2
+        flags |= model.setData(
+            index,
+            [x.text() for x in editor.ui.performerList.findItems(
+                '*', Qt.MatchWildcard)],
+            SceneDataRole.PerformersRole) << 0
+        vNew, nNew = s.is_valid(), s.viewname()
+        if flags: # changes made, update the duptracker
+            hv[nOld] = hv.get(nOld, 1) - 1
+            hv[nNew] = hv.get(nNew, 0) + 1
+        if vOld ^ vNew or flags & (0x1 << (model.filterRole() - Qt.UserRole)):
+            model.invalidateFilter()
+            # print(f'Invalidating "{flags:>08b}"')
 
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index) -> None:
         '''
@@ -108,22 +122,23 @@ class SceneDelegate(QStyledItemDelegate):
 
         paysite = index.data(SceneDataRole.PaysiteRole)
         s = index.data(SceneDataRole.SceneRole)
-        released = index.data(SceneDataRole.DateRole)
+        if index.model().sourceModel().hashvalues.get(s.viewname(), 0) > 1:
+            painter.setPen(QColor('red'))
+        released = str(index.data(SceneDataRole.DateRole))
         resolution = f'Resolution: {s.resolution()}'
         size = human_readable(s.size) # size as string
-        title = index.data(SceneDataRole.TitleRole)
+        title = index.data(SceneDataRole.TitleRole) if s.is_valid() else s.viewname()
         performers = index.data(SceneDataRole.PerformersRole) # perfs as string
 
         wPerfs, hPerfs = QFontMetrics(self.pFont).size(0, performers).toTuple()
         wSite, _ = painter.fontMetrics().size(0, paysite).toTuple()
         wTitle, hDefault = painter.fontMetrics().size(0, title).toTuple()
-        wName, _ = painter.fontMetrics().size(0, s.basename()).toTuple()
         wDate, _ = painter.fontMetrics().size(0, released).toTuple()
         wSize, hSize = QFontMetrics(self.sFont).size(0, size).toTuple()
         wResolution, _ = painter.fontMetrics().size(0, resolution).toTuple()
 
         x, y, w, h = option.rect.adjusted(5, 5, -5, -5).getRect() # layout coords
-        w2, w3 = max(wPerfs, wSite, wTitle or wName), max(wDate, wSize, wResolution)
+        w2, w3 = max(wPerfs, wSite, wTitle), max(wDate, wSize, wResolution)
         height = hDefault+s.is_valid()*(hPerfs+1+bool(s.title)*(hDefault+1))
         offset = (h - min(h, self.iconSize)) >> 1
         origin = QPoint(
@@ -148,7 +163,7 @@ class SceneDelegate(QStyledItemDelegate):
                 painter.drawText(titleRect, Qt.AlignLeft|Qt.AlignVCenter, title) # title
         else:
             painter.drawText(
-                QRect(origin, QSize(w2, hDefault)), Qt.AlignLeft, s.basename())
+                QRect(origin, QSize(w2, hDefault)), Qt.AlignLeft, s.viewname())
         # column 3: Information
         releasedRect = QRect(
             w - w3, y + ((h - (hSize + 2*(hDefault + 1)))>>1), w3, hDefault)
@@ -165,5 +180,4 @@ class SceneDelegate(QStyledItemDelegate):
         '''
         '''
         h = 10 + max(self.iconSize, QFontMetrics(self.sFont).height() + 2 * (QFontMetrics(option.font).height() + 1))
-        # return super().sizeHint(option, index)
         return QSize(h, h) # TODO: implement a better way to estimate the size

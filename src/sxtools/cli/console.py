@@ -4,7 +4,7 @@ from typing import Tuple
 
 from sxtools.core.manager import Manager, RFCode
 from sxtools.core.videoscene import Scene
-from sxtools.logging import REGEX, get_basic_logger
+from sxtools.logging import get_basic_logger
 from sxtools.utils import fview
 
 logger = get_basic_logger() # sXtools.log
@@ -87,10 +87,11 @@ class Console:
                     if x.paysite:
                         paysites[x.paysite] = paysites.get(x.paysite, 0) + 1
                 paysites = sorted(paysites.items(), key=lambda x: x[1], reverse=True)[:top]
-                data = [
-                    ('Top', 'Performer', 'Count', 'Paysite', 'Count'), # caption
-                    *[(x, y[0][0], y[0][1], y[1][0], y[1][1]) for
-                    x, y in zip(range(1, len(perfs) + 1), zipl(perfs, paysites))]]
+                if not paysites: # list is empty
+                    logger.warning(
+                        'Perform an analysis (:a) or The queue contains unregexable scene(s) only!')
+                    break
+                data = [('Top', 'Performer', 'Count', 'Paysite', 'Count'), *[(x, y[0][0], y[0][1], y[1][0], y[1][1]) for x, y in zip(range(1, len(perfs) + 1), zipl(perfs, paysites))]]
                 for id, performer, pc, paysite, sc in data:
                     print(f'{str(id).zfill(3):^{5}} {fview(performer):^{20}} {pc:^{5}} {paysite:^{40}} {sc:^{5}}')
             elif cmd in [':a', 'analyse']:
@@ -100,7 +101,7 @@ class Console:
                     i += self.manager.analyse(s)
                     logger.debug(
                         f'\n-------------------------\n'
-                        f'> Name: {s.name()}\n'
+                        f'> Name: {s.viewname()}\n'
                         f'> Performers: {s.perfs_as_string()}\n'
                         f'> Released: {s.released} by "{s.paysite}" in "{s.title}"\n'
                         f'---------------------------')
@@ -110,6 +111,6 @@ class Console:
                 for s in self.manager.queue:
                     self.manager.relocate(s)
             else:
-                print(f'Unknown command: "{cmd}". Type "commandlist" to see all available commands')
+                print(f'Unhandled command: "{cmd}". Type "commandlist" to see all available commands')
 
 # SxTools!MANAGER helps you to manage collections according to your wishes

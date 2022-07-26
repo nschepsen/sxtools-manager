@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'sceneeditor.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.3.0
+## Created by: Qt User Interface Compiler version 6.3.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -101,6 +101,7 @@ class Ui_SceneEditor(object):
         self.gridLayout_4.setSizeConstraint(QLayout.SetDefaultConstraint)
         self.lblBaseName = QLabel(self.path)
         self.lblBaseName.setObjectName(u"lblBaseName")
+        self.lblBaseName.setTextInteractionFlags(Qt.LinksAccessibleByMouse|Qt.TextSelectableByMouse)
 
         self.gridLayout_4.addWidget(self.lblBaseName, 0, 0, 1, 1)
 
@@ -139,12 +140,12 @@ class Ui_SceneEditor(object):
 
         self.gridLayout_2.addWidget(self.lblPaysite, 1, 0, 1, 1)
 
-        self.pushButton = QPushButton(self.metadata)
-        self.pushButton.setObjectName(u"pushButton")
-        self.pushButton.setMinimumSize(QSize(0, 30))
-        self.pushButton.setMaximumSize(QSize(80, 16777215))
+        self.btnParseDate = QPushButton(self.metadata)
+        self.btnParseDate.setObjectName(u"btnParseDate")
+        self.btnParseDate.setMinimumSize(QSize(0, 30))
+        self.btnParseDate.setMaximumSize(QSize(80, 16777215))
 
-        self.gridLayout_2.addWidget(self.pushButton, 0, 2, 1, 1)
+        self.gridLayout_2.addWidget(self.btnParseDate, 0, 2, 1, 1)
 
         self.btnResetDate = QPushButton(self.metadata)
         self.btnResetDate.setObjectName(u"btnResetDate")
@@ -162,8 +163,9 @@ class Ui_SceneEditor(object):
         self.iReleaseDate.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
         self.iReleaseDate.setCorrectionMode(QAbstractSpinBox.CorrectToNearestValue)
         self.iReleaseDate.setProperty("showGroupSeparator", False)
-        self.iReleaseDate.setDateTime(QDateTime(QDate(2000, 1, 1), QTime(0, 0, 0)))
+        self.iReleaseDate.setMinimumDate(QDate(1752, 9, 14))
         self.iReleaseDate.setCalendarPopup(False)
+        self.iReleaseDate.setDate(QDate(1752, 9, 14))
 
         self.gridLayout_2.addWidget(self.iReleaseDate, 0, 1, 1, 1)
 
@@ -190,10 +192,15 @@ class Ui_SceneEditor(object):
 
         self.gridLayout_3.addWidget(self.groupBox, 2, 0, 1, 1)
 
-        QWidget.setTabOrder(self.performerList, self.btnResetDate)
-        QWidget.setTabOrder(self.btnResetDate, self.iReleaseDate)
-        QWidget.setTabOrder(self.iReleaseDate, self.iPaysite)
         QWidget.setTabOrder(self.iPaysite, self.iTitle)
+        QWidget.setTabOrder(self.iTitle, self.iPerformer)
+        QWidget.setTabOrder(self.iPerformer, self.btnAdd)
+        QWidget.setTabOrder(self.btnAdd, self.iReleaseDate)
+        QWidget.setTabOrder(self.iReleaseDate, self.btnParseDate)
+        QWidget.setTabOrder(self.btnParseDate, self.btnResetDate)
+        QWidget.setTabOrder(self.btnResetDate, self.performerList)
+        QWidget.setTabOrder(self.performerList, self.btnDelete)
+        QWidget.setTabOrder(self.btnDelete, self.btnClear)
 
         self.retranslateUi(SceneEditor)
         self.btnClear.clicked.connect(self.performerList.clear)
@@ -217,7 +224,7 @@ class Ui_SceneEditor(object):
         self.lblDate.setText(QCoreApplication.translate("SceneEditor", u"Released:", None))
         self.lblTitle.setText(QCoreApplication.translate("SceneEditor", u"Scene Title:", None))
         self.lblPaysite.setText(QCoreApplication.translate("SceneEditor", u"Paysite:", None))
-        self.pushButton.setText(QCoreApplication.translate("SceneEditor", u"Fetch", None))
+        self.btnParseDate.setText(QCoreApplication.translate("SceneEditor", u"Fetch", None))
         self.btnResetDate.setText(QCoreApplication.translate("SceneEditor", u"Reset", None))
         self.iReleaseDate.setSpecialValueText("")
         self.iReleaseDate.setDisplayFormat(QCoreApplication.translate("SceneEditor", u"yyyy-MM-dd", None))

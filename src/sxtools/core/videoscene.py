@@ -1,18 +1,14 @@
+# from datetime import date  # released min date(1, 1, 1)
 from mimetypes import MimeTypes
-from os.path import basename, getsize, join  # posixpath
-from re import IGNORECASE, sub
+from os.path import basename, getsize  # posixpath
 from random import randrange
-from hashlib import md5
+from re import IGNORECASE, sub
 from subprocess import call, check_output
-
-from sxtools.utils import cache
-try:
-    from rapidjson import loads  # extremely fast C++ JSON parser and serialization library
-except ImportError:
-    from json import loads
+# extremely fast C++ JSON parser and serialization library
+from rapidjson import loads
 from sxtools.logging import get_basic_logger
-
-logger = get_basic_logger()  # see ~/.config/sxtools/sXtools.log
+logger = get_basic_logger()  # sXtools.log
+from sxtools.utils import cache  # keep thumbnails in one place
 
 
 class Scene:
@@ -23,8 +19,8 @@ class Scene:
         self.size = getsize(path) # os.stat()
         self.performers = list()
         self.title, self.paysite = '', ''
-        self.released = None # date is not set
-        self.ffprobed = False # deep scan performed
+        self.released = None # not set yet | date.min
+        self.ffprobed = False # get metadata using ffprobe, e.g. bitrate, resolution, duration
 
     def __str__(self) -> str:
 
@@ -32,22 +28,21 @@ class Scene:
 
     def is_valid(self) -> bool:
         '''
-        get bool state signaling a scene was already parsed
-        :return: scene is valid or not
+        check if scene well-parsed is
         '''
         return bool(self.released and self.performers and self.paysite)
 
     def basename(self) -> str:
         '''
-        return scene's basename using os.path
+        return the final component of a pathname
         '''
         return basename(self.path)
 
-    def name(self) -> str:
+    def viewname(self) -> str:
         '''
-        return scene's display name
+        return the viewname of a scene
         '''
-        return self.title or f'{self.perfs_as_string()} by {self.paysite}' if self.is_valid() else self.basename()
+        return f'd="{self.released or ""}" p="{self.perfs_as_string()}" s="{self.paysite}" t="{self.title}"'
 
     def set_title(self, title: str = '') -> None:
         '''
@@ -55,7 +50,7 @@ class Scene:
         '''
         t = ' '.join((title or '').split())
         t = sub(' part (\d+)', ' (Part \g<1>)', t, flags=IGNORECASE)
-
+    # t = sub('\'[A-Z]', lambda x: x.group(0).lower(), m.group('title'))
         self.title = t # assign a fmt'd string
 
     def resolution(self) -> str:
@@ -83,7 +78,7 @@ class Scene:
         '''
         read out video file's metadata using "ffprobe" (part of "ffmpeg")
         '''
-        logger.debug(f'Scanning "{self.basename()}"')
+        logger.debug(f'Scanning {self.viewname()}')
         try:
             meta = loads(check_output(['ffprobe',
                     '-v', 'fatal',
@@ -131,7 +126,7 @@ class Scene:
         '''
         name = basename(self.path)[:-4] # .lower()
         sep = '.' if name.count('.') > name.count(' ') else ' '
-        for ss in list(['[pt]']):
+        for ss in list(['[pt]', '[', ']']):
             name = name.replace(ss, sep)
         droplist = ['720p','1080p','1920p','2160p','bj','int','mp4','mp4-gush','mp4-ktr','mp4-nbq','mp4-wrb','repack','xxx']
         return sep.join(

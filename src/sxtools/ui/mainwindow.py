@@ -1,8 +1,9 @@
 from os import scandir, unlink
+from os.path import isfile
 from subprocess import call
 from typing import Tuple
 from PySide6.QtCore import QModelIndex, Qt, Slot
-from PySide6.QtGui import QAction, QActionGroup
+from PySide6.QtGui import QActionGroup, QCloseEvent
 from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QRadioButton, QStyle
 from sxtools import __author__, __date__, __email__, __status__, __version__
 from sxtools.core.manager import Manager
@@ -10,8 +11,8 @@ from sxtools.core.rfcode import RFCode
 from sxtools.core.videoscene import Scene
 from sxtools.logging import get_basic_logger
 from sxtools.ui.scenefilter import SceneSortFilter
+from sxtools.ui.sitemapeditor import SitemapEditor
 logger = get_basic_logger()  # see ~/.config/sxtools/sXtools.log
-# re-build .ui-files as the case may be, use pyside6-uic
 from sxtools.ui.compiled.mainwindow import Ui_MainWindow
 from sxtools.ui.decisiondialog import DecisionDialog
 from sxtools.ui.scenelistdelegate import SceneDelegate
@@ -29,6 +30,7 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.manager = manager # load manager
         self.manager.ui, self.ui = self, Ui_MainWindow()
+        self.smeWindow = None
         self.ui.setupUi(self) # load UI
         spawnRect = QStyle.alignedRect(
             Qt.LeftToRight,
@@ -67,25 +69,44 @@ class MainWindow(QMainWindow):
         self.ui.aClearCache.triggered.connect(self.clearCache)
         self.ui.aClearCache.setText(
             f'Clear Cache ({human_readable(cache_size())})')
-        self.ui.aFilterTagged.triggered.connect(self.onFilterTypeChanged)
-        self.ui.aFilterUntagged.triggered.connect(self.onFilterTypeChanged)
+        self.ui.aFilterModeT.triggered.connect(proxy.invalidateFilter)
+        self.ui.aFilterModeU.triggered.connect(proxy.invalidateFilter)
         # connect Qt6 actions, QMenu:@Help
         self.ui.aAbout.triggered.connect(self.about)
         self.ui.aAboutQt.triggered.connect(self.aboutQt)
+        # self.ui.aEditSiteMap.triggered.connect(self.editMapping)
         self.ui.aUpdate.triggered.connect(self.update) # check for a new version
+    def closeEvent(self, event: QCloseEvent) -> None:
+        '''
+        '''
+        ret = QMessageBox.question(self,
+        'SxTools!MANAGER <Question>', 'Are you sure you want to exit the program?')
+        if ret != QMessageBox.StandardButton.Yes:
+            return event.ignore()
+        else:
+            return super().closeEvent(event)
     @Slot(QModelIndex)
     def play(self, index: QModelIndex) -> None:
         '''
         '''
+        model = index.model() # sfp-model
         # TODO: internal video player
-        baseIndex = index.model().mapToSource(index) # get base index
-        call(['mpv', baseIndex.model().scenelist[baseIndex.row()].path])
+        baseIndex = model.mapToSource(index) # get base index
+        row = baseIndex.row()
+        path = baseIndex.model().scenelist[row].path
+        call(['mpv', path]) # play video wi mpv
+        if not isfile(path):
+            baseIndex.model().remove(baseIndex)
+        self.ui.sceneView.setCurrentIndex(QModelIndex())
+        # TODO: re-implement this method, aprox. in SxTools!MANAGER v1.2.1
+        self.ui.filtredValue.setText(str(self.ui.sceneView.model().rowCount()))
     @Slot()
     def open(self) -> None:
         '''
         Look for scene(s), analyse and load 'em into a View
         '''
         self.ui.sceneView.model().sourceModel().clear() # reset
+        self.manager.reset()
         src = QFileDialog.getExistingDirectory(self,
             'Open Directory',
             self.manager.src,
@@ -141,7 +162,7 @@ class MainWindow(QMainWindow):
         Change the Order: Qt.AscendingOrder & Qt.DescendingOrder
         '''
         self.ui.sceneView.model().sort(
-            0, Qt.SortOrder(self.ui.actionSortOrder.isChecked()))
+            0, Qt.SortOrder(self.ui.aSortOrder.isChecked()))
     @Slot(str)
     def onFilterTextChanged(self, string: str) -> None:
         '''
@@ -209,6 +230,20 @@ class MainWindow(QMainWindow):
         '''
         QMessageBox.aboutQt(self, 'SxTools!MANAGER <About Qt>')
     @Slot()
+    # def editMapping(self) -> None:
+    #     '''
+    #     Edit Paysite Mapping
+    #     '''
+    #     if self.smeWindow is None:
+    #         self.smeWindow = SitemapEditor(self.manager.cfg)
+    #         spawnRect = QStyle.alignedRect(
+    #             Qt.LeftToRight,
+    #             Qt.AlignCenter,
+    #             self.smeWindow.size(),
+    #             self.geometry())
+    #         self.smeWindow.setGeometry(spawnRect)
+    #     self.smeWindow.show()
+    @Slot()
     def update(self) -> None:
         '''
         Check your version of this app for update(s)
@@ -228,13 +263,6 @@ class MainWindow(QMainWindow):
         self.ui.sceneView.setFocus() # TODO: force to repaint
         self.ui.aClearCache.setText(
             f'Clear Cache ({human_readable(cache_size())})')
-    @Slot(QAction)
-    def onFilterTypeChanged(self, action: QAction):
-        '''
-        '''
-        self.ui.sceneView.model().invalidateFilter()
-        # update the label "Found"
-        self.ui.filtredValue.setText(str(self.ui.sceneView.model().rowCount()))
 
     def save(self) -> None: self.manager.save()
 
@@ -250,11 +278,10 @@ class MainWindow(QMainWindow):
             'skip': RFCode.SKIP_SCENE,
             'title': RFCode.TITLE
             }.get(ret, RFCode.PERFORMER)
-        print(f'opcode: {opcode} -> ret: {ret}')
         return opcode, ret # return a Tuple[opcode[, performer]]
 
     def question(self, msg: str) -> bool:
         '''
         '''
-        ret = QMessageBox.question(self, 'Make your Decision', msg)
+        ret = QMessageBox.question(self, 'SxTools!MANAGER <Question>', msg)
         return ret == QMessageBox.StandardButton.Yes

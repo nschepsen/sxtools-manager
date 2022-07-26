@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'mainwindow.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.3.0
+## Created by: Qt User Interface Compiler version 6.3.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -26,7 +26,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(927, 517)
+        MainWindow.resize(1103, 649)
         font = QFont()
         font.setBold(False)
         MainWindow.setFont(font)
@@ -56,48 +56,36 @@ class Ui_MainWindow(object):
         self.aAbout = QAction(MainWindow)
         self.aAbout.setObjectName(u"aAbout")
         icon3 = QIcon()
-        iconThemeName = u"help-about"
-        if QIcon.hasThemeIcon(iconThemeName):
-            icon3 = QIcon.fromTheme(iconThemeName)
-        else:
-            icon3.addFile(u".", QSize(), QIcon.Normal, QIcon.Off)
-        
+        icon3.addFile(u".", QSize(), QIcon.Normal, QIcon.Off)
         self.aAbout.setIcon(icon3)
         self.aAboutQt = QAction(MainWindow)
         self.aAboutQt.setObjectName(u"aAboutQt")
         self.aAboutQt.setMenuRole(QAction.AboutQtRole)
         self.aUpdate = QAction(MainWindow)
         self.aUpdate.setObjectName(u"aUpdate")
+        self.aUpdate.setIcon(icon3)
+        self.aSettings = QAction(MainWindow)
+        self.aSettings.setObjectName(u"aSettings")
         icon4 = QIcon()
-        iconThemeName = u"view-refresh"
+        iconThemeName = u"preferences-desktop"
         if QIcon.hasThemeIcon(iconThemeName):
             icon4 = QIcon.fromTheme(iconThemeName)
         else:
             icon4.addFile(u".", QSize(), QIcon.Normal, QIcon.Off)
         
-        self.aUpdate.setIcon(icon4)
-        self.aSettings = QAction(MainWindow)
-        self.aSettings.setObjectName(u"aSettings")
+        self.aSettings.setIcon(icon4)
+        self.aRelocate = QAction(MainWindow)
+        self.aRelocate.setObjectName(u"aRelocate")
+        self.aSave = QAction(MainWindow)
+        self.aSave.setObjectName(u"aSave")
         icon5 = QIcon()
-        iconThemeName = u"preferences-desktop"
+        iconThemeName = u"document-save"
         if QIcon.hasThemeIcon(iconThemeName):
             icon5 = QIcon.fromTheme(iconThemeName)
         else:
             icon5.addFile(u".", QSize(), QIcon.Normal, QIcon.Off)
         
-        self.aSettings.setIcon(icon5)
-        self.aRelocate = QAction(MainWindow)
-        self.aRelocate.setObjectName(u"aRelocate")
-        self.aSave = QAction(MainWindow)
-        self.aSave.setObjectName(u"aSave")
-        icon6 = QIcon()
-        iconThemeName = u"document-save"
-        if QIcon.hasThemeIcon(iconThemeName):
-            icon6 = QIcon.fromTheme(iconThemeName)
-        else:
-            icon6.addFile(u".", QSize(), QIcon.Normal, QIcon.Off)
-        
-        self.aSave.setIcon(icon6)
+        self.aSave.setIcon(icon5)
         self.actionSortByTitle = QAction(MainWindow)
         self.actionSortByTitle.setObjectName(u"actionSortByTitle")
         self.actionSortByTitle.setCheckable(True)
@@ -110,33 +98,33 @@ class Ui_MainWindow(object):
         self.aSortOrder = QAction(MainWindow)
         self.aSortOrder.setObjectName(u"aSortOrder")
         self.aSortOrder.setCheckable(True)
-        icon7 = QIcon()
+        icon6 = QIcon()
         iconThemeName = u"reverse"
+        if QIcon.hasThemeIcon(iconThemeName):
+            icon6 = QIcon.fromTheme(iconThemeName)
+        else:
+            icon6.addFile(u".", QSize(), QIcon.Normal, QIcon.Off)
+        
+        self.aSortOrder.setIcon(icon6)
+        self.aFilterModeU = QAction(MainWindow)
+        self.aFilterModeU.setObjectName(u"aFilterModeU")
+        self.aFilterModeU.setCheckable(True)
+        self.aFilterModeU.setChecked(False)
+        self.aFilterModeT = QAction(MainWindow)
+        self.aFilterModeT.setObjectName(u"aFilterModeT")
+        self.aFilterModeT.setCheckable(True)
+        self.aScan = QAction(MainWindow)
+        self.aScan.setObjectName(u"aScan")
+        self.aClearCache = QAction(MainWindow)
+        self.aClearCache.setObjectName(u"aClearCache")
+        icon7 = QIcon()
+        iconThemeName = u"delete"
         if QIcon.hasThemeIcon(iconThemeName):
             icon7 = QIcon.fromTheme(iconThemeName)
         else:
             icon7.addFile(u".", QSize(), QIcon.Normal, QIcon.Off)
         
-        self.aSortOrder.setIcon(icon7)
-        self.aFilterUntagged = QAction(MainWindow)
-        self.aFilterUntagged.setObjectName(u"aFilterUntagged")
-        self.aFilterUntagged.setCheckable(True)
-        self.aFilterUntagged.setChecked(False)
-        self.aFilterTagged = QAction(MainWindow)
-        self.aFilterTagged.setObjectName(u"aFilterTagged")
-        self.aFilterTagged.setCheckable(True)
-        self.aScan = QAction(MainWindow)
-        self.aScan.setObjectName(u"aScan")
-        self.aClearCache = QAction(MainWindow)
-        self.aClearCache.setObjectName(u"aClearCache")
-        icon8 = QIcon()
-        iconThemeName = u"delete"
-        if QIcon.hasThemeIcon(iconThemeName):
-            icon8 = QIcon.fromTheme(iconThemeName)
-        else:
-            icon8.addFile(u".", QSize(), QIcon.Normal, QIcon.Off)
-        
-        self.aClearCache.setIcon(icon8)
+        self.aClearCache.setIcon(icon7)
         self.actionAdd_a_Collection = QAction(MainWindow)
         self.actionAdd_a_Collection.setObjectName(u"actionAdd_a_Collection")
         self.actionSortBySize = QAction(MainWindow)
@@ -145,6 +133,16 @@ class Ui_MainWindow(object):
         self.actionSortByReleaseDate = QAction(MainWindow)
         self.actionSortByReleaseDate.setObjectName(u"actionSortByReleaseDate")
         self.actionSortByReleaseDate.setCheckable(True)
+        self.aEditSiteMap = QAction(MainWindow)
+        self.aEditSiteMap.setObjectName(u"aEditSiteMap")
+        icon8 = QIcon()
+        iconThemeName = u"text-x-script"
+        if QIcon.hasThemeIcon(iconThemeName):
+            icon8 = QIcon.fromTheme(iconThemeName)
+        else:
+            icon8.addFile(u".", QSize(), QIcon.Normal, QIcon.Off)
+        
+        self.aEditSiteMap.setIcon(icon8)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.gridLayout = QGridLayout(self.centralwidget)
@@ -153,9 +151,9 @@ class Ui_MainWindow(object):
         self.loNavigation.setObjectName(u"loNavigation")
         self.filterBox = QLineEdit(self.centralwidget)
         self.filterBox.setObjectName(u"filterBox")
-        self.filterBox.setMinimumSize(QSize(300, 30))
+        self.filterBox.setMinimumSize(QSize(300, 0))
         self.filterBox.setMaximumSize(QSize(230, 16777215))
-        self.filterBox.setStyleSheet(u"padding-left: 5px;")
+        self.filterBox.setStyleSheet(u"padding: 5px;")
         self.filterBox.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
         self.filterBox.setClearButtonEnabled(True)
 
@@ -233,7 +231,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 927, 19))
+        self.menubar.setGeometry(QRect(0, 0, 1103, 19))
         self.mFile = QMenu(self.menubar)
         self.mFile.setObjectName(u"mFile")
         self.mEdit = QMenu(self.menubar)
@@ -246,10 +244,10 @@ class Ui_MainWindow(object):
         self.statusbar = QStatusBar(MainWindow)
         self.statusbar.setObjectName(u"statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        QWidget.setTabOrder(self.sceneView, self.filterBox)
+        QWidget.setTabOrder(self.filterBox, self.rbPerformers)
         QWidget.setTabOrder(self.rbPerformers, self.rbPaysites)
         QWidget.setTabOrder(self.rbPaysites, self.rbTitles)
-        QWidget.setTabOrder(self.rbTitles, self.sceneView)
-        QWidget.setTabOrder(self.sceneView, self.filterBox)
 
         self.menubar.addAction(self.mFile.menuAction())
         self.menubar.addAction(self.mEdit.menuAction())
@@ -265,6 +263,7 @@ class Ui_MainWindow(object):
         self.mEdit.addAction(self.aSettings)
         self.mHelp.addAction(self.aAbout)
         self.mHelp.addAction(self.aAboutQt)
+        self.mHelp.addAction(self.aEditSiteMap)
         self.mHelp.addSeparator()
         self.mHelp.addAction(self.aUpdate)
         self.menuView.addAction(self.actionSortByPerformers)
@@ -278,8 +277,8 @@ class Ui_MainWindow(object):
         self.menuView.addAction(self.aScan)
         self.menuView.addAction(self.aClearCache)
         self.menuView.addSeparator()
-        self.menuView.addAction(self.aFilterTagged)
-        self.menuView.addAction(self.aFilterUntagged)
+        self.menuView.addAction(self.aFilterModeT)
+        self.menuView.addAction(self.aFilterModeU)
 
         self.retranslateUi(MainWindow)
         self.aQuit.triggered.connect(MainWindow.close)
@@ -322,8 +321,8 @@ class Ui_MainWindow(object):
         self.actionSortByPaysite.setToolTip(QCoreApplication.translate("MainWindow", u"Sort by Paysite", None))
 #endif // QT_CONFIG(tooltip)
         self.aSortOrder.setText(QCoreApplication.translate("MainWindow", u"Reverse Sort Order", None))
-        self.aFilterUntagged.setText(QCoreApplication.translate("MainWindow", u"Filter out \"Untagged\"", None))
-        self.aFilterTagged.setText(QCoreApplication.translate("MainWindow", u"Filter out \"Tagged\"", None))
+        self.aFilterModeU.setText(QCoreApplication.translate("MainWindow", u"Filter out \"Untagged\"", None))
+        self.aFilterModeT.setText(QCoreApplication.translate("MainWindow", u"Filter out \"Tagged\"", None))
         self.aScan.setText(QCoreApplication.translate("MainWindow", u"Perform Scan", None))
         self.aClearCache.setText(QCoreApplication.translate("MainWindow", u"Clear Cache [0 MiB]", None))
         self.actionAdd_a_Collection.setText(QCoreApplication.translate("MainWindow", u"Add a Collection", None))
@@ -335,10 +334,14 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(shortcut)
         self.actionSortByReleaseDate.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+3", None))
 #endif // QT_CONFIG(shortcut)
+        self.aEditSiteMap.setText(QCoreApplication.translate("MainWindow", u"Configure Site Mapping", None))
+#if QT_CONFIG(shortcut)
+        self.aEditSiteMap.setShortcut(QCoreApplication.translate("MainWindow", u"F8", None))
+#endif // QT_CONFIG(shortcut)
 #if QT_CONFIG(tooltip)
         self.filterBox.setToolTip("")
 #endif // QT_CONFIG(tooltip)
-        self.filterBox.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Filter by certain Values", None))
+        self.filterBox.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Filter scenes by a fixed string", None))
         self.filtredLabel.setText(QCoreApplication.translate("MainWindow", u"Found:", None))
         self.filtredValue.setText(QCoreApplication.translate("MainWindow", u"0", None))
         self.filterOptionsLabel.setText(QCoreApplication.translate("MainWindow", u"Search in:", None))
