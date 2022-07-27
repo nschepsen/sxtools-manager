@@ -3,7 +3,7 @@ from os.path import isfile
 from subprocess import call
 from typing import Tuple
 from PySide6.QtCore import QModelIndex, Qt, Slot
-from PySide6.QtGui import QActionGroup, QCloseEvent
+from PySide6.QtGui import QActionGroup, QCloseEvent, QShortcut, QKeySequence
 from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QProgressDialog, QRadioButton, QStyle
 from sxtools import __author__, __date__, __email__, __status__, __version__
 from sxtools.core.manager import Manager
@@ -11,7 +11,7 @@ from sxtools.core.rfcode import RFCode
 from sxtools.core.videoscene import Scene
 from sxtools.logging import get_basic_logger
 from sxtools.ui.scenefilter import SceneSortFilter
-from sxtools.ui.sitemapeditor import SitemapEditor
+# from sxtools.ui.sitemapeditor import SitemapEditor
 logger = get_basic_logger()  # see ~/.config/sxtools/sXtools.log
 from sxtools.ui.compiled.mainwindow import Ui_MainWindow
 from sxtools.ui.decisiondialog import DecisionDialog
@@ -46,6 +46,7 @@ class MainWindow(QMainWindow):
         self.ui.sceneView.setModel(proxy)
         self.ui.sceneView.setItemDelegate(SceneDelegate(self.ui.sceneView))
         # connect Qt6 signals
+        QShortcut(QKeySequence.Delete, self).activated.connect(self.remove)
         self.ui.sceneView.doubleClicked.connect(self.play)
         self.ui.filterBox.textChanged.connect(
             self.onFilterTextChanged)
@@ -124,27 +125,37 @@ class MainWindow(QMainWindow):
         # update the label "Found"
         self.ui.filtredValue.setText(str(self.ui.sceneView.model().rowCount()))
     @Slot()
+    def remove(self) -> None:
+        '''
+        '''
+        selectedItems = self.ui.sceneView.selectedIndexes()
+        if not selectedItems:
+            return
+        for idx in selectedItems:
+            proxy = self.ui.sceneView.model()
+            proxy.sourceModel().remove(proxy.mapToSource(idx))
+        # update the label "Found"
+        self.ui.filtredValue.setText(str(self.ui.sceneView.model().rowCount()))
+    @Slot()
     def relocate(self) -> None:
         '''
         Move "all or selected only" scenes to a Collection Directory
         '''
-        sidx = self.ui.sceneView.selectedIndexes()
-        if not sidx:
-            pool = self.manager.queue
-        else:
-            proxy = self.ui.sceneView.model()
-            sl = proxy.sourceModel().scenelist
-            pool = [sl[proxy.mapToSource(idx).row()] for idx in sidx]
         output = QFileDialog.getExistingDirectory(self,
             'Move scene(s) to Collection',
-            self.manager.out,
-            QFileDialog.ShowDirsOnly)
+            self.manager.out, QFileDialog.ShowDirsOnly)
         if not output:
             return
         self.manager.out = output
+        selectedItems = self.ui.sceneView.selectedIndexes()
+        if not selectedItems:
+            pool = self.manager.queue
+        else:
+            proxy = self.ui.sceneView.model() # proxy
+            sl = proxy.sourceModel().scenelist
+            pool = [sl[proxy.mapToSource(idx).row()] for idx in selectedItems]
         for s in pool:
             self.manager.relocate(s)
-        # TODO: relocate selected scene(s) item-wise, otherwise all at once
     @Slot(QActionGroup)
     def onSortModeChanged(self, ag: QActionGroup) -> None:
         '''

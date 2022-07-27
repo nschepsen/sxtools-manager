@@ -53,8 +53,10 @@ class SceneModel(QAbstractListModel):
         self.beginRemoveRows(QModelIndex(), row, row)
         s = self.scenelist.pop(row)
         self.endRemoveRows()
+        key = s.viewname()
         logger.info(
-            f'Removed "{s.viewname()}" successfully')
+            f'Removed "{key}" successfully')
+        self.hashvalues[key] = self.hashvalues.get(key, 1) - 1
 
     def rowCount(self, parent = QModelIndex()) -> int:
         '''
