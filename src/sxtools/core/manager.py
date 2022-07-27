@@ -242,7 +242,8 @@ class Manager:
             isMoveable = True # each scene is moveable by default
             logger.debug(f'Trying to save "{fn}" in "{suffix}"')
             if exists(target):
-                logger.warning('Oops! A copy already exists')
+                logger.warning(
+                    f'Oops! A copy of "{fn}" already exists')
                 old, new = human_readable(getsize(target)), human_readable(s.size)
                 isMoveable = self.ui.question(
                     f'Do you want to replace "{old}" with "{new}"?')
