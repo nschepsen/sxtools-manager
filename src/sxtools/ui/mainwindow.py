@@ -126,16 +126,23 @@ class MainWindow(QMainWindow):
     @Slot()
     def relocate(self) -> None:
         '''
-        Move all loaded scenes to a Collection Directory
+        Move "all or selected only" scenes to a Collection Directory
         '''
+        sidx = self.ui.sceneView.selectedIndexes()
+        if not sidx:
+            pool = self.manager.queue
+        else:
+            proxy = self.ui.sceneView.model()
+            sl = proxy.sourceModel().scenelist
+            pool = [sl[proxy.mapToSource(idx).row()] for idx in sidx]
         output = QFileDialog.getExistingDirectory(self,
-            'Save to Collection',
+            'Move scene(s) to Collection',
             self.manager.out,
             QFileDialog.ShowDirsOnly)
         if not output:
             return
         self.manager.out = output
-        for s in self.manager.queue:
+        for s in pool:
             self.manager.relocate(s)
         # TODO: relocate selected scene(s) item-wise, otherwise all at once
     @Slot(QActionGroup)
