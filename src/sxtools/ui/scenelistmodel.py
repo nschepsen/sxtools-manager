@@ -30,8 +30,9 @@ class SceneModel(QAbstractListModel):
         '''
         self.beginResetModel()
         self.scenelist = sl # aware of duplicates
-        self.hashvalues = {
-            s.viewname() : 1 for s in sl}
+        for s in sl:
+            k = s.viewname()
+            self.hashvalues[k] = self.hashvalues.get(k, 0) + 1
         self.endResetModel()
 
     def clear(self) -> None:
