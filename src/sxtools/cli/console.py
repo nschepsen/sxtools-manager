@@ -38,10 +38,14 @@ class Console:
         logger.info(
             f'{len(self.manager.queue) - sn[0]} new scene(s) were added to the queue')
 
-    def question(self, msg: str) -> bool:
+    def question(self, question: str) -> int:
         '''
+        Client-Side implementation of a question System
         '''
-        return input(f'> {msg} Type "yes" or "no": ').lower().strip() or 'yes' == 'yes'
+        ret = input(
+            f'> {question} Type "yes", "no" or "discard": ').lower().strip()
+        return {
+            'yes': 1, 'no': 0, 'discard': 2 }.get(ret, 0)
 
     def decision(self, tail: str, s: Scene) -> Tuple[RFCode, str]:
         '''

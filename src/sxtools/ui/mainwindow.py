@@ -47,6 +47,8 @@ class MainWindow(QMainWindow):
         self.ui.sceneView.setItemDelegate(SceneDelegate(self.ui.sceneView))
         # connect Qt6 signals
         QShortcut(QKeySequence.Delete, self).activated.connect(self.remove)
+        QShortcut(
+            QKeySequence.Deselect, self).activated.connect(lambda: self.ui.sceneView.clearSelection())
         self.ui.sceneView.doubleClicked.connect(self.play)
         self.ui.filterBox.textChanged.connect(
             self.onFilterTextChanged)
@@ -134,6 +136,7 @@ class MainWindow(QMainWindow):
         for idx in selectedItems:
             proxy = self.ui.sceneView.model()
             proxy.sourceModel().remove(proxy.mapToSource(idx))
+        self.ui.sceneView.clearSelection()
         # update the label "Found"
         self.ui.filtredValue.setText(str(self.ui.sceneView.model().rowCount()))
     @Slot()
@@ -148,17 +151,21 @@ class MainWindow(QMainWindow):
             return
         self.manager.out = output
         selectedItems = self.ui.sceneView.selectedIndexes()
+        clearSelection = False
         if not selectedItems:
-            pool = self.manager.queue
+            queue = self.manager.queue
         else:
             proxy = self.ui.sceneView.model() # proxy
             sl = proxy.sourceModel().scenelist
-            pool = [sl[proxy.mapToSource(idx).row()] for idx in selectedItems]
-        for s in pool:
+            clearSelection = True
+            queue = [sl[proxy.mapToSource(idx).row()] for idx in selectedItems]
+        for s in queue:
             self.manager.relocate(s)
+        if clearSelection: self.remove() # delete seleceted scene(s)
     @Slot(QActionGroup)
     def onSortModeChanged(self, ag: QActionGroup) -> None:
         '''
+        Handle a Sort Mode Changing
         '''
         self.ui.sceneView.model().setSortRole(
             {
@@ -177,13 +184,17 @@ class MainWindow(QMainWindow):
     @Slot()
     def onSortOrderChanged(self) -> None:
         '''
-        Change the Order: Qt.AscendingOrder & Qt.DescendingOrder
+        Handle a Sort Order Changing
         '''
+        if not self.ui.sceneView.model().sortRole():
+            self.ui.aSortOrder.setChecked(False)
+            return
         self.ui.sceneView.model().sort(
             0, Qt.SortOrder(self.ui.aSortOrder.isChecked()))
     @Slot(str)
     def onFilterTextChanged(self, string: str) -> None:
         '''
+        Handle a Filter Text Changing
         '''
         self.ui.sceneView.model().setFilterFixedString(string)
         # update the label "Found"
@@ -298,8 +309,19 @@ class MainWindow(QMainWindow):
             }.get(ret, RFCode.PERFORMER)
         return opcode, ret # return a Tuple[opcode[, performer]]
 
-    def question(self, msg: str) -> bool:
+    def question(self, question: str) -> int:
         '''
+        Client-Side implementation of a question System
         '''
-        ret = QMessageBox.question(self, 'SxTools!MANAGER <Question>', msg)
-        return ret == QMessageBox.StandardButton.Yes
+        ret = QMessageBox.question(
+            self,
+            'SxTools!MANAGER <Question>',
+            question,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Discard,
+        )
+        return {
+            QMessageBox.StandardButton.Yes: 1,
+            QMessageBox.StandardButton.No: 0,
+            QMessageBox.StandardButton.Discard: 2
+        }.get(ret, 0)
+        return ret # assert QMessageBox.StandardButton == type(ret)

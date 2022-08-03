@@ -1,6 +1,6 @@
 from argparse import Namespace
 from hashlib import md5  # used for sitemap.json hashing to detect changes
-from os import listdir, makedirs, sep
+from os import listdir, makedirs, sep, unlink
 from os.path import basename, dirname, exists, getsize, isdir, join, realpath
 from re import search, split  # , sub
 from shutil import move
@@ -9,7 +9,7 @@ from sxtools import __date__, __project__, __version__
 from sxtools.core.rfcode import RFCode  # FIXME: any WAs maybe?!
 from sxtools.core.videoscene import Scene
 from sxtools.logging import PARSE, REGEX, get_basic_logger
-from sxtools.utils import bview, cache, fview, human_readable, sortmap, strtdate, unify
+from sxtools.utils import bview, cache, fview, human_readable as hr, sortmap, strtdate, unify
 
 scheme = list([
 
@@ -242,12 +242,13 @@ class Manager:
             isMoveable = True # each scene is moveable by default
             logger.debug(f'Trying to save "{fn}" in "{suffix}"')
             if exists(target):
-                logger.warning(
-                    f'Oops! A copy of "{fn}" already exists')
-                old, new = human_readable(getsize(target)), human_readable(s.size)
+                logger.warning(f'Oops! A copy of "{fn}" already exists')
                 isMoveable = self.ui.question(
-                    f'Do you want to replace "{old}" with "{new}"?')
-            if isMoveable:
+                    f'File: {fn}\n\n'
+                    f'Do you want to replace "{hr(getsize(target))}" with "{hr(s.size)}"?')
+            if isMoveable == 2:
+                unlink(s.path) # remove a duplicate scene
+            elif isMoveable:
                 makedirs(dirname(target), exist_ok = True) # be sure, the folder exists
                 thumbnail = cache(s.basename())
                 if s.basename() != basename(target) and thumbnail:
