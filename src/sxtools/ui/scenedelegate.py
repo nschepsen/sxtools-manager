@@ -2,7 +2,7 @@ from PySide6.QtCore import QAbstractItemModel, QModelIndex, QPoint, QRect, QSize
 from PySide6.QtGui import QBrush, QColor, QFont, QFontMetrics, QImage, QPainter, QPalette
 from PySide6.QtWidgets import QApplication, QStyle, QStyledItemDelegate, QStyleOptionViewItem, QWidget
 from sxtools.ui.sceneeditor import SceneEditor
-from sxtools.ui.scenelistmodel import SceneDataRole
+from sxtools.ui.scenemodel import SceneDataRole
 from sxtools.utils import human_readable  # fmt size to a human readable string
 
 
@@ -97,6 +97,7 @@ class SceneDelegate(QStyledItemDelegate):
         if flags: # changes made, update the duptracker
             hv[nOld] = hv.get(nOld, 1) - 1
             hv[nNew] = hv.get(nNew, 0) + 1
+            self.parent().parent().parent().dataChanged = True
         if vOld ^ vNew or flags & (0x1 << (model.filterRole() - Qt.UserRole)):
             model.invalidateFilter()
             # print(f'Invalidating "{flags:>08b}"')

@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'mainwindow.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.3.1
+## Created by: Qt User Interface Compiler version 6.3.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -232,6 +232,49 @@ class Ui_MainWindow(object):
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
         self.menubar.setGeometry(QRect(0, 0, 1103, 19))
+        self.menubar.setStyleSheet(u"QMenu {\n"
+"    padding: 3px;\n"
+"}\n"
+"\n"
+"QMenu::item {\n"
+"    padding: 5px 5px 5px 18px;\n"
+"}\n"
+"\n"
+"QMenu::item:selected {\n"
+"    background: rgba(237, 237, 237, 237);\n"
+"}\n"
+"\n"
+"QMenu::icon {\n"
+"    margin: 0 10px;\n"
+"    padding: 2px;\n"
+"}\n"
+"\n"
+"QMenu::icon:checked {\n"
+"    background: rgba(200, 200, 200, 50);\n"
+"    border: 1px inset gray;\n"
+"    border-radius: 5px;\n"
+"    position: absolute;\n"
+"    left: -1px;\n"
+"}\n"
+"\n"
+"QMenu::indicator {\n"
+"    left: 12px;\n"
+"\n"
+"}\n"
+"\n"
+"QMenu::indicator:checked {\n"
+"    background: gray;\n"
+"    border: 1px inset black;\n"
+"    margin: 4px;\n"
+"\n"
+"}\n"
+"\n"
+"QMenu::separator {\n"
+"    background: rgba(200, 200, 200, 50);\n"
+"    height: 1px;\n"
+"    margin: 1px 0;\n"
+"}\n"
+"")
         self.mFile = QMenu(self.menubar)
         self.mFile.setObjectName(u"mFile")
         self.mEdit = QMenu(self.menubar)

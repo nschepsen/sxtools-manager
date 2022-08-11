@@ -12,56 +12,59 @@ DefaultQDate = QDate(1752, 9, 14).toPython() # FIXME: QDate handling
 
 SceneDataRole = IntEnum(
     'SceneDataRole',
-    'PerformersRole PaysiteRole TitleRole DateRole SizeRole SceneRole',
+    'PerformersRole PaysiteRole TitleRole DateRole SizeRole PathRole SceneRole',
     start = Qt.UserRole)
 
 class SceneModel(QAbstractListModel):
-
-    def __init__(self, s: Scene = None, parent = None) -> None:
+    '''
+    class for maintaining sceneslist, used by QSortFilterProxyModel
+    '''
+    def __init__(self, parent = None) -> None:
         '''
+        initialize class itself, scenelist and hashvalues
         '''
         super(SceneModel, self).__init__(parent)
-        self.scenelist = s or list() # init data
-        self.hashvalues = {}
+        self.scenelist = list()
+        self.hashvalues = {} # aware of duplicates
 
-    def sync(self, sl: list) -> None:
+    def sync(self, sl: list[Scene]) -> None:
         '''
-        sync sceneView w the app queue
+        sync sceneview w the app queue
         '''
         self.beginResetModel()
-        self.scenelist = sl # aware of duplicates
+        self.scenelist = sl
         for s in sl:
             k = s.viewname()
             self.hashvalues[k] = self.hashvalues.get(k, 0) + 1
-        self.endResetModel()
+        self.endResetModel() # model sync'd
 
     def clear(self) -> None:
         '''
-        reset sceneView (QAbstractListModel) model
+        reset sceneview (QAbstractListModel) model
         '''
         self.beginResetModel()
         self.scenelist.clear()
         self.hashvalues.clear()
-        self.endResetModel() # model cleared
+        self.endResetModel() # model clear'd
 
     def remove(self, index = QModelIndex()) -> None:
         '''
-        remove selected scene and update sceneView
+        delete scene with given index from the list
         '''
         if not index.isValid():
+            logger.warning('The index is not valid')
             return
         row = index.row()
         self.beginRemoveRows(QModelIndex(), row, row)
         s = self.scenelist.pop(row)
         self.endRemoveRows()
         key = s.viewname()
-        logger.info(
-            f'Removed "{key}" successfully')
+        logger.info(f'Removed {key} successfully')
         self.hashvalues[key] = self.hashvalues.get(key, 1) - 1
 
     def rowCount(self, parent = QModelIndex()) -> int:
         '''
-        return the size of the scenelist
+        return number of scenes in the list
         '''
         return len(self.scenelist)
 
@@ -83,6 +86,8 @@ class SceneModel(QAbstractListModel):
             return s.size # not humanreadable yet
         elif role == SceneDataRole.SceneRole:
             return s # return the reference to the scene
+        elif role == SceneDataRole.PathRole:
+            return s.path # absolute path of a given scene
         elif role == Qt.DecorationRole:
             thumbnail = cache(s.basename())
             if thumbnail:

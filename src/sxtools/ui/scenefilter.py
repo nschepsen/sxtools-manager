@@ -1,5 +1,5 @@
 from PySide6.QtCore import QModelIndex, QSortFilterProxyModel, Qt
-from sxtools.ui.scenelistmodel import SceneDataRole
+from sxtools.ui.scenemodel import SceneDataRole
 
 
 class SceneSortFilter(QSortFilterProxyModel):
@@ -44,3 +44,5 @@ class SceneSortFilter(QSortFilterProxyModel):
                 a = a.lower()
                 b = b.lower()
         return a < b # compare two objects together, strings almost
+
+    def remove(self, index: QModelIndex) -> None: self.sourceModel().remove(self.mapToSource(index))

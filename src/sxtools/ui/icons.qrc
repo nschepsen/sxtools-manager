@@ -4,6 +4,5 @@
     <file>resources/light/settings.svg</file>
     <file>resources/light/close.svg</file>
     <file>resources/light/video-camera.svg</file>
-    <file>resources/thumbnail.jpg</file>
   </qresource>
 </RCC>

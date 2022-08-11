@@ -192,6 +192,51 @@
      <height>19</height>
     </rect>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QMenu {
+    padding: 3px;
+}
+
+QMenu::item {
+    padding: 5px 5px 5px 18px;
+}
+
+QMenu::item:selected {
+    background: rgba(237, 237, 237, 237);
+}
+
+QMenu::icon {
+    margin: 0 10px;
+    padding: 2px;
+}
+
+QMenu::icon:checked {
+    background: rgba(200, 200, 200, 50);
+    border: 1px inset gray;
+    border-radius: 5px;
+    position: absolute;
+    left: -1px;
+}
+
+QMenu::indicator {
+    left: 12px;
+
+}
+
+QMenu::indicator:checked {
+    background: gray;
+    border: 1px inset black;
+    margin: 4px;
+
+}
+
+QMenu::separator {
+    background: rgba(200, 200, 200, 50);
+    height: 1px;
+    margin: 1px 0;
+}
+</string>
+   </property>
    <widget class="QMenu" name="mFile">
     <property name="title">
      <string>&amp;File</string>
