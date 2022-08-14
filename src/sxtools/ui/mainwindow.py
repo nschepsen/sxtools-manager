@@ -11,7 +11,7 @@ from sxtools.core.rfcode import RFCode
 from sxtools.core.videoscene import Scene
 from sxtools.logging import get_basic_logger
 from sxtools.ui.scenefilter import SceneSortFilter
-# from sxtools.ui.sitemapeditor import SitemapEditor
+from sxtools.ui.sitemapeditor import SitemapEditor
 logger = get_basic_logger()  # see ~/.config/sxtools/sXtools.log
 from sxtools.ui.compiled.mainwindow import Ui_MainWindow
 from sxtools.ui.scenedialog import DecisionDialog
@@ -32,6 +32,7 @@ class MainWindow(QMainWindow):
         self.manager.ui, self.ui = self, Ui_MainWindow()
         self.ui.setupUi(self) # load UI
         self.dataChanged = False
+        self.smeWindow = None
         self.setGeometry(QStyle.alignedRect(
             Qt.LeftToRight,
             Qt.AlignCenter,
@@ -80,7 +81,7 @@ class MainWindow(QMainWindow):
         # connect Qt6 actions, QMenu:@Help
         self.ui.aAbout.triggered.connect(self.onAboutActionTriggered)
         self.ui.aAboutQt.triggered.connect(self.onAboutQtActionTriggered)
-        # self.ui.aEditSiteMap.triggered.connect(self.editMapping)
+        self.ui.aEditSiteMap.triggered.connect(self.editMapping)
         self.ui.aUpdate.triggered.connect(self.onUpdateActionTriggered) # check for a new version
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
@@ -205,7 +206,7 @@ class MainWindow(QMainWindow):
     @Slot(QActionGroup)
     def onSortModeChanged(self, ag: QActionGroup) -> None:
         '''
-        рandle SortMode сhanging
+        handle SortMode changing
         '''
         self.ui.sceneView.model().setSortRole(
             {
@@ -303,19 +304,19 @@ class MainWindow(QMainWindow):
         QMessageBox.aboutQt(self, 'SxTools!MANAGER <About Qt>')
 
     @Slot()
-    # def editMapping(self) -> None:
-    #     '''
-    #     Edit Paysite Mapping
-    #     '''
-    #     if self.smeWindow is None:
-    #         self.smeWindow = SitemapEditor(self.manager.cfg)
-    #         spawnRect = QStyle.alignedRect(
-    #             Qt.LeftToRight,
-    #             Qt.AlignCenter,
-    #             self.smeWindow.size(),
-    #             self.geometry())
-    #         self.smeWindow.setGeometry(spawnRect)
-    #     self.smeWindow.show()
+    def editMapping(self) -> None:
+        '''
+        open a sitemap editor's window (singleton)
+        '''
+        if not self.smeWindow:
+            self.smeWindow = SitemapEditor(self.manager.cfg)
+            spawnRect = QStyle.alignedRect(
+                Qt.LeftToRight,
+                Qt.AlignCenter,
+                self.smeWindow.size(),
+                self.geometry())
+            self.smeWindow.setGeometry(spawnRect)
+        self.smeWindow.show() # show sitemap editor window if is there one
 
     @Slot()
     def onUpdateActionTriggered(self) -> None:
@@ -340,7 +341,25 @@ class MainWindow(QMainWindow):
         self.ui.aClearCache.setText(
             f'Clear Cache ({human_readable(cache_size())})')
 
-    def onSaveActionTriggered(self) -> None: self.manager.save()
+    def onSaveActionTriggered(self) -> None:
+        '''
+        save configs and other necessary informations
+        '''
+        if self.smeWindow: # check if sitemap window open'd
+            # get acronyms
+            w = self.smeWindow.ui.acronyms
+            d = {}
+            for row in range(w.rowCount()):
+                d.update(
+                    {w.item(row, 0).text(): w.item(row, 1).text()})
+            self.manager.cfg['acronyms'] = d
+            # get paysites
+            w = self.smeWindow.ui.paysites
+            self.manager.cfg['sites'] = [w.item(row).text() for row in range(w.count())]
+            # get unknowns
+            w = self.smeWindow.ui.unknowns
+            self.manager.cfg['undefined'] = [w.item(row).text() for row in range(w.count())]
+        self.manager.save() # save changes to the file
 
     def decision(self, tail: str, s: Scene) -> Tuple[RFCode, str]:
         '''
