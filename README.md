@@ -45,6 +45,16 @@ optional arguments:
 
 ## CHANGELOG ##
 
+### SxTools!MANAGER 1.2.1 ###
+
+* add partial or rather selected scenes only relocation
+* add deletion of selected scenes by pressing `QKeySequence.Delete`
+* add `sme` (sitemap editor)
+* fix `relocate()` duplicate existence warning
+* extend the client-side ui.question implementation
+* fix hashvalue duplicate detection
+* add small other fixes & clean up the code for a releases
+
 ### SxTools!MANAGER 1.2.0 ###
 
 * fix typo(s) & release
