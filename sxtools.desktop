@@ -1,0 +1,20 @@
+[Desktop Entry]
+Categories=Game;
+Comment[de_DE]=A simple manager for your scene video collection
+Comment=A simple manager for your scene video collection
+Exec=bash -i -c "source /home/nikolaj/Projects/GitHub/sxtools-manager/.env/bin/activate; sxtools -v --qt"
+GenericName[de_DE]=
+GenericName=
+Icon=/home/nikolaj/Projects/GitHub/sxtools-manager/src/sxtools/ui/resources/light/video-camera.svg
+MimeType=
+Name[de_DE]=SxTools!MANAGER
+Name=SxTools!MANAGER
+Path=
+StartupNotify=true
+Terminal=false
+TerminalOptions=
+Type=Application
+X-DBUS-ServiceName=
+X-DBUS-StartupType=
+X-KDE-SubstituteUID=false
+X-KDE-Username=
